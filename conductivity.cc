@@ -8,9 +8,6 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-//for strtoi
-//#include <cstdlib>
-
 #include "runtime-check.h"
 
 // Do we do runtime checks? Defined via makefile
