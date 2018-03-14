@@ -2,7 +2,17 @@
 #include <random>
 #include <complex>
 #include <iostream>
+
+//from getopt example. Do I actually need all of these?
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+
+//for strtoi
+//#include <cstdlib>
+
 #include "runtime-check.h"
+
 // Do we do runtime checks? Defined via makefile
 //#define CHECK false
 // Do we do slow checks (the ones that require creating a whole dense
@@ -258,7 +268,7 @@ all_mu(MPOt<Tensor> const& H,
 
 
     
-int main()
+int main(int argc, char **argv)
 {
 
   int L = 8; // System size
@@ -271,6 +281,64 @@ int main()
     
   int s = 0;
 
+
+  //==============================================================
+  //Parse Command Line Arguments
+  while (1)
+    {
+      static struct option long_options[] =
+        {
+          /* These options don’t set a flag.
+             We distinguish them by their indices. */
+          {"system-size",      required_argument,       0, 'L'},
+          {"bond-dimension",  required_argument,        0, 'M'},
+          {"chebyshev-order",  required_argument,       0, 'N'},
+          {0, 0, 0, 0}
+        };
+      /* getopt_long stores the option index here. */
+      int option_index = 0;
+
+      char c = getopt_long (argc, argv, "L:M:N:", long_options, &option_index);
+
+      /* Detect the end of the options. */
+      if (c == -1)
+        break;
+
+      switch (c)
+        {
+        case 0:
+          /* If this option set a flag, do nothing else now. */
+          if (long_options[option_index].flag != 0)
+            break;
+
+        case 'L':
+	  L = std::stoi(optarg);
+	  std::cout << "L = " << L << "\n";
+          break;
+
+        case 'M':
+	  Maxm = std::stoi(optarg);
+	  std::cout << "Maxm = " << Maxm << "\n";
+          break;
+
+        case 'N':
+	  N = std::stoi(optarg);
+	  std::cout << "N = " << N << "\n";
+          break;
+	  
+        case '?':
+          /* getopt_long already printed an error message. */
+          break;
+
+        default:
+          abort ();
+        }
+    }
+
+
+  //==============================================================
+  //Sanity check (are we doing runtime checks)
+  
 #if CHECK
   std::cout << "runtime checks inoperative" << "\n";
   exit(1);
@@ -282,7 +350,9 @@ int main()
     }
     
 #endif
-
+  
+  //==============================================================
+  //construct random field Heisenberg Hamiltonian, current operator
   
   std::complex<float> im(0,1); //1i
   
@@ -318,6 +388,9 @@ int main()
       j_ampo += coeff,"S+",b,"S-",b+1;
       j_ampo += -coeff,"S-",b,"S+",b+1;
     }
+  
+  //==============================================================
+  // compute mu
   auto j = IQMPO(j_ampo);
   auto mu = all_mu(H, j, N, Maxm, 1);
   /*
