@@ -399,12 +399,19 @@ int main(int argc, char **argv)
       H_ampo += 0.5,"S-",b,"S+",b+1;
       H_ampo +=     "Sz",b,"Sz",b+1;
     }
+
+  //for bandwidth upper bound
+  double sumhz = 0.0;
   for(int b = 1; b <= L; ++b)
     {
       double hz = d(e);
+      sumhz += std::abs(hz);
       H_ampo += hz, "Sz",b;
     }
   auto H = IQMPO(H_ampo);
+  // Normalize the hamiltonian so its bandwidth is in [-1,1]
+  // H = H/(3*(L-1) + sum(abs.(hj)))
+  H *= (1.0/(3*(L-1) + sumhz));
 
   //construct current mpo
   auto j_ampo = AutoMPO(sites);
@@ -414,7 +421,7 @@ int main(int argc, char **argv)
       j_ampo += coeff,"S+",b,"S-",b+1;
       j_ampo += -coeff,"S-",b,"S+",b+1;
     }
-  
+
   //==============================================================
   // compute mu
   auto j = IQMPO(j_ampo);
