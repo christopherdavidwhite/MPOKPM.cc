@@ -185,7 +185,8 @@ template <class Tensor>
 std::vector<std::vector<std::complex<double>> >
 all_mu(MPOt<Tensor> const& H,
        MPOt<Tensor> const& j,
-       std::ofstream& file,
+       std::ofstream& realmu_file,
+       std::ofstream& imagmu_file,
        int N, int Maxm, int prog_per)
 {
   //mu should be real for physical reasons. Important not to take real
@@ -209,7 +210,7 @@ all_mu(MPOt<Tensor> const& H,
   MPOt<Tensor> Tnm1 = I;
   MPOt<Tensor> Tm, Tmm1, C;
 
-#if CHECK
+#ifdef CHECK
   MPOt<Tensor> Tnm2, Un, Unm1, Unm2;
   MPOt<Tensor> Tmm2, Um, Umm1, Umm2;
   MPOt<Tensor> H2;
@@ -226,15 +227,20 @@ all_mu(MPOt<Tensor> const& H,
     // these two lines copy. That is as it should be!
     Tm   = Tn;
     Tmm1 = Tnm1;
-#if CHECK
+#ifdef CHECK
     Tnm2 = Tnm1; // Copies. Store these guys so we can use them to
     Unm2 = Unm1; // check that we got the recursion relation right
 #endif
 
-    for (int m = 0; m < n; m++) { file << 0.0 << " "; }
+    for (int m = 0; m < n; m++)
+      {
+	realmu_file << 0.0 << " ";
+	imagmu_file << 0.0 << " ";
+      }
     for (int m = n; m < N; m++) {
       mu[n][m] = mu[m][n] = single_mu(Tn,Tm,j);
-      file << mu[m][n] << " ";
+      realmu_file << real(mu[m][n]) << " ";
+      imagmu_file << imag(mu[m][n]) << " ";
 
       // Once again, this 0 == m case code copies. That's fine!
       // Those're really small MPOs, and we only do it once! We could
@@ -244,7 +250,7 @@ all_mu(MPOt<Tensor> const& H,
       if(0 == m) { Tm   = H; Tmm1 = I; }
       // else get the Chebyshevs moved up for the next iteration
       else       { advance_chebyshevs(Tm, Tmm1, H, Maxm); }
-#if CHECK
+#ifdef CHECK
       if(0 == m) { Um   = 2*H; Umm1 = I; }
       else
 	{
@@ -254,11 +260,12 @@ all_mu(MPOt<Tensor> const& H,
 #endif
     }
 
-    file << "\n";
+    realmu_file << "\n";
+    imagmu_file << "\n";
       
     if(0 == n) { Tn   = H; Tnm1 = I; }
     else       { advance_chebyshevs(Tn, Tnm1, H, Maxm); }
-#if CHECK
+#ifdef CHECK
     if(0 == n) { Un   = 2*H; Unm1 = I; }
     else
       {
@@ -352,20 +359,24 @@ int main(int argc, char **argv)
   //==============================================================
   //set some variables
 
-  std::ofstream file(filename);
-  if (!file)
-    error("Could not open file for writing");
-  //todo more informative error message
+  std::string realmu_filename = filename + ".re";
+  std::string imagmu_filename = filename + ".im";
+  std::ofstream realmu_file(realmu_filename);
+  if (!realmu_file) {error("Could not open file for writing");}
+  std::ofstream imagmu_file(imagmu_filename);
+  if (!imagmu_file) {error("Could not open file for writing");}
+  //todo more informative error messages
 
   //If we need more than 10 digits of precision (say), we're in deep
   //trouble anyway
-  file.precision(15);
+  realmu_file.precision(15);
+  imagmu_file.precision(15);
     
 
   //==============================================================
   //Sanity check (are we doing runtime checks)
   
-#if CHECK
+#ifdef CHECK
   std::cout << "runtime checks inoperative" << "\n";
   exit(1);
 
@@ -393,6 +404,7 @@ int main(int argc, char **argv)
   //construct our random-field Heisenberg
   //TODO: check factor of two
   auto H_ampo = AutoMPO(sites);
+  //++b or b++?
   for(int b = 1; b < L; ++b)
     {
       H_ampo += 0.5,"S+",b,"S-",b+1;
@@ -425,7 +437,7 @@ int main(int argc, char **argv)
   //==============================================================
   // compute mu
   auto j = IQMPO(j_ampo);
-  auto mu = all_mu(H, j, file, N, Maxm, 1);
+  auto mu = all_mu(H, j, realmu_file, imagmu_file, N, Maxm, 1);
   /*
   for (int n = 0; n < L; n++) {
     for (int m = 0; m < L; m++) {
