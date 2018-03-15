@@ -30,9 +30,8 @@ GOBJECTS=$(patsubst %,.debug_objs/%, $(OBJECTS))
 	$(CCCOM) -c $(CCFLAGS) -o $@ $<
 
 .debug_objs/%.o: %.cc $(HEADERS) $(TENSOR_HEADERS)
-	$(CCCOM) -c $(CCGFLAGS) --define-macro CHECK=true -o $@ $<
 #	$(CCCOM) -c $(CCGFLAGS) --define-macro CHECK=true -o $@ $<
-
+	$(CCCOM) -c $(CCGFLAGS) -o $@ $<
 #Targets -----------------
 
 build: $(APP)
@@ -43,7 +42,7 @@ $(APP): $(OBJECTS) $(ITENSOR_LIBS)
 	$(CCCOM) $(CCFLAGS) $(OBJECTS) -o $(APP) $(LIBFLAGS) -lpthread
 
 $(APP)-g: mkdebugdir $(GOBJECTS) $(ITENSOR_GLIBS)
-	$(CCCOM) $(CCGFLAGS) $(GOBJECTS) -o $(APP)-g $(LIBGFLAGS)  -lpthread
+	$(CCCOM) $(CCGFLAGS) $(GOBJECTS) -o $(APP)-g $(LIBGFLAGS)  -lpthread -lgtest
 
 clean:
 	rm -fr .debug_objs *.o $(APP) $(APP)-g $(APP)-c
