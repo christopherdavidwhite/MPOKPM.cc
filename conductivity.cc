@@ -1,4 +1,6 @@
-#include "itensor/all.h"
+#include "itensor/mps/autompo.h"
+#include "itensor/mps/sites/spinhalf.h"
+
 #include <random>
 #include <complex>
 #include <iostream>
@@ -280,7 +282,7 @@ all_mu(MPOt<Tensor> const& H,
 }
 
 
-    
+#ifndef TESTING //test has its own main function
 int main(int argc, char **argv)
 {
 
@@ -391,7 +393,7 @@ int main(int argc, char **argv)
   //==============================================================
   //construct random field Heisenberg Hamiltonian, current operator
   
-  std::complex<float> im(0,1); //1i
+  std::complex<double> im(0,1); //1i
   
   //set up random number generation
   //cf https://isocpp.org/files/papers/n3551.pdf
@@ -429,7 +431,7 @@ int main(int argc, char **argv)
   auto j_ampo = AutoMPO(sites);
   for(int b = 1; b < L; ++b)
     {
-      auto coeff = 0.5;
+      auto coeff = im*0.5;
       j_ampo += coeff,"S+",b,"S-",b+1;
       j_ampo += -coeff,"S-",b,"S+",b+1;
     }
@@ -447,3 +449,4 @@ int main(int argc, char **argv)
   */
 }
 
+#endif //ifndef TEST
