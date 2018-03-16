@@ -294,6 +294,7 @@ int main(int argc, char **argv)
   int Maxm = 32; // Bond dimension cutoff. This is also pretty small,
 		 // though we may be able to get away with it
   int s = 0;
+  double hz = 1.0;
   std::string filename = "/tmp/conductivity.txt";
 
 
@@ -341,7 +342,10 @@ int main(int argc, char **argv)
 	  N = std::stoi(optarg);
 	  std::cout << "N = " << N << "\n";
           break;
-	 
+
+	case 'h':
+	  hz = std::stod(optarg);
+	  std::cout << "hz = " << hz << "\n";
         case 'f':
 	  filename = optarg;
 	  std::cout <<  filename << "\n";
@@ -415,17 +419,17 @@ int main(int argc, char **argv)
     }
 
   //for bandwidth upper bound
-  double sumhz = 0.0;
+  double sumhzj = 0.0;
   for(int b = 1; b <= L; ++b)
     {
-      double hz = d(e);
-      sumhz += std::abs(hz);
-      H_ampo += hz, "Sz",b;
+      double hzj = hz * (2*d(e) - 1);
+      sumhzj += std::abs(hzj);
+      H_ampo += hzj, "Sz",b;
     }
   auto H = IQMPO(H_ampo);
   // Normalize the hamiltonian so its bandwidth is in [-1,1]
   // H = H/(3*(L-1) + sum(abs.(hj)))
-  H *= (1.0/(3*(L-1) + sumhz));
+  H *= (1.0/(3*(L-1) + sumhzj));
 
   //construct current mpo
   auto j_ampo = AutoMPO(sites);
