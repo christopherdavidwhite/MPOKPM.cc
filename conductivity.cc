@@ -440,13 +440,6 @@ int main(int argc, char **argv)
   // compute mu
   auto j = IQMPO(j_ampo);
   auto mu = all_mu(H, j, realmu_file, imagmu_file, N, Maxm, 1);
-  /*
-  for (int n = 0; n < L; n++) {
-    for (int m = 0; m < L; m++) {
-      std::cout << n << " " << m << " " << mu[n][m] << "\n";
-    }
-  }
-  */
 }
 
 #endif //ifndef TEST
