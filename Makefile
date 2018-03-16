@@ -1,6 +1,6 @@
 # copied from Miles' example
 
-LIBRARY_DIR=/home/user/work/itensor
+LIBRARY_DIR=/home/christopher/itensor
 
 ifdef app
 APP=$(app)
