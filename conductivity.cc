@@ -5,6 +5,7 @@
 #include <complex>
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
 //from getopt example. Do I actually need all of these?
 #include <stdio.h>
@@ -363,17 +364,21 @@ int main(int argc, char **argv)
     }
 
   //==============================================================
-  //set some variables
+  //set some variables, mostly files/filenames
 
   std::string realmu_filename = filename + ".re";
   std::string imagmu_filename = filename + ".im";
   std::string disout_filename = filename + ".dis";
+  std::string timing_filename = filename + ".tim";
+  
   std::ofstream realmu_file(realmu_filename);
   if (!realmu_file) {error("Could not open file for writing");}
   std::ofstream imagmu_file(imagmu_filename);
   if (!imagmu_file) {error("Could not open file for writing");}
   std::ofstream disout_file(disout_filename);
   if (!disout_file) {error("Could not open file for writing");}
+  std::ofstream timing_file(timing_filename);
+  if (!timing_file) {error("Could not open file for writing");}
   //todo more informative error messages
 
   //If we need more than 10 digits of precision (say), we're in deep
@@ -381,7 +386,7 @@ int main(int argc, char **argv)
   realmu_file.precision(15);
   imagmu_file.precision(15);
   disout_file.precision(15);
-    
+  timing_file.precision(15); //this really doesn't need this much precision
 
   //==============================================================
   //Sanity check (are we doing runtime checks)
@@ -449,7 +454,12 @@ int main(int argc, char **argv)
   //==============================================================
   // compute mu
   auto j = IQMPO(j_ampo);
+
+  auto t0 = std::chrono::high_resolution_clock::now();
   auto mu = all_mu(H, j, realmu_file, imagmu_file, N, Maxm, 1);
+  auto t1 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> computation_time = t1 - t0;
+  timing_file << computation_time.count() << "\n";
 }
 
 #endif //ifndef TEST
