@@ -1,6 +1,6 @@
 # copied from Miles' example
 
-LIBRARY_DIR=/home/christopher/itensor
+LIBRARY_DIR=$(ITENSOR_DIR)
 
 ifdef app
 APP=$(app)
