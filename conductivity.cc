@@ -367,16 +367,20 @@ int main(int argc, char **argv)
 
   std::string realmu_filename = filename + ".re";
   std::string imagmu_filename = filename + ".im";
+  std::string disout_filename = filename + ".dis";
   std::ofstream realmu_file(realmu_filename);
   if (!realmu_file) {error("Could not open file for writing");}
   std::ofstream imagmu_file(imagmu_filename);
   if (!imagmu_file) {error("Could not open file for writing");}
+  std::ofstream disout_file(disout_filename);
+  if (!disout_file) {error("Could not open file for writing");}
   //todo more informative error messages
 
   //If we need more than 10 digits of precision (say), we're in deep
   //trouble anyway
   realmu_file.precision(15);
   imagmu_file.precision(15);
+  disout_file.precision(15);
     
 
   //==============================================================
@@ -423,9 +427,11 @@ int main(int argc, char **argv)
   for(int b = 1; b <= L; ++b)
     {
       double hzj = hz * (2*d(e) - 1);
+      disout_file << hzj << " ";
       sumhzj += std::abs(hzj);
       H_ampo += hzj, "Sz",b;
     }
+  disout_file << "\n";
   auto H = IQMPO(H_ampo);
   // Normalize the hamiltonian so its bandwidth is in [-1,1]
   // H = H/(3*(L-1) + sum(abs.(hj)))
