@@ -190,6 +190,7 @@ all_mu(MPOt<Tensor> const& H,
        MPOt<Tensor> const& j,
        std::ofstream& realmu_file,
        std::ofstream& imagmu_file,
+       std::ofstream& chebbd_file,
        int N, int Maxm, int prog_per)
 {
   //mu should be real for physical reasons. Important not to take real
@@ -268,6 +269,8 @@ all_mu(MPOt<Tensor> const& H,
       
     if(0 == n) { Tn   = H; Tnm1 = I; }
     else       { advance_chebyshevs(Tn, Tnm1, H, Maxm); }
+    chebbd_file << n << " " << maxM(Tn) << "\n";
+    
 #ifdef CHECK
     if(0 == n) { Un   = 2*H; Unm1 = I; }
     else
@@ -370,6 +373,7 @@ int main(int argc, char **argv)
   std::string imagmu_filename = filename + ".im";
   std::string disout_filename = filename + ".dis";
   std::string timing_filename = filename + ".tim";
+  std::string chebbd_filename = filename + ".chM"; //record bond dimensions of Chebyshev polynomials
   
   std::ofstream realmu_file(realmu_filename);
   if (!realmu_file) {error("Could not open file for writing");}
@@ -379,6 +383,8 @@ int main(int argc, char **argv)
   if (!disout_file) {error("Could not open file for writing");}
   std::ofstream timing_file(timing_filename);
   if (!timing_file) {error("Could not open file for writing");}
+  std::ofstream chebbd_file(chebbd_filename);
+  if (!chebbd_file) {error("Could not open file for writing");}
   //todo more informative error messages
 
   //If we need more than 10 digits of precision (say), we're in deep
@@ -456,7 +462,7 @@ int main(int argc, char **argv)
   auto j = IQMPO(j_ampo);
 
   auto t0 = std::chrono::high_resolution_clock::now();
-  auto mu = all_mu(H, j, realmu_file, imagmu_file, N, Maxm, 1);
+  auto mu = all_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, 1);
   auto t1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> computation_time = t1 - t0;
   timing_file << computation_time.count() << "\n";
