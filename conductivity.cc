@@ -100,13 +100,24 @@ advance_chebyshevs(MPOt<Tensor>& Tn,
 		   int Maxm)
 {
   MPOt<Tensor> C;
+
+  // We don't want to truncate during nmultMPO---that would truncate
+  // at each bond as we zip up from left to right, which is very
+  // wrong. We do still want nix the numerical noise,
+  // though. Frobenius norm is submultiplicative, so we take a cutoff
+  // like 1e-14 * (upper bound on Frobenius norm of H*Tn).
+  double cutoff = 1e-14;//*norm(H)*norm(Tn); 
+  
   // Multiply Tn by H and store the result in C. (Fortran idiom.) This
   // is probably the slowest part.
-  nmultMPO(Tn, H, C, {"Maxm",Maxm}); 
+  
+  nmultMPO(Tn, H, C, {"Cutoff",cutoff}); 
   C *= 2;
+  C.orthogonalize({"Maxm", Maxm});
 
   //Probably second slowest step.
-  C.plusEq( (-1)* Tnm1, {"Maxm",Maxm}) ;
+  C.plusEq( (-1)* Tnm1, {"Cutoff",cutoff}) ;
+  C.orthogonalize({"Maxm", Maxm});
   
   /* This next bit is weird but cool to me, the C++ newbie.
 
@@ -269,7 +280,7 @@ all_mu(MPOt<Tensor> const& H,
       
     if(0 == n) { Tn   = H; Tnm1 = I; }
     else       { advance_chebyshevs(Tn, Tnm1, H, Maxm); }
-    chebbd_file << n << " " << maxM(Tn) << "\n";
+    chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
     
 #ifdef CHECK
     if(0 == n) { Un   = 2*H; Unm1 = I; }
