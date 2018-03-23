@@ -7,6 +7,28 @@
 
 using namespace itensor;
 
+// compute overlap of Tn with op.
+
+template <class Tensor>
+std::complex<double>
+single_mu(MPOt<Tensor> const& Tn,
+	  MPOt<Tensor> const& op )
+{
+
+  //just a transpose
+  op.mapprime(1,2);
+  op.mapprime(0,1);
+  op.mapprime(2,0);
+
+  int N = op.N();
+  assert(N == Tn.N());
+    
+  auto L = Tn.A(1) * op.A(1);
+  for(int i=2; i <= N; ++i) { L = L * Tn.A(i) * op.A(i); }
+  auto z = L.cplx();
+  return z;
+}
+  
 // slight modification of overlap(psi, H,K, phi) from itensor mpo.cc.
 // overlap is almost but not quite what I want: it doesn't get the
 // prime level quite right, hence messes up the contractions.
@@ -38,7 +60,7 @@ double_mu(MPOt<Tensor> const& Tn,
 
   //scales as m^2 k^2 d per Miles in mpo.cc. What in my case?
   auto L = jpdag.A(1) * Tndag.A(1) * jp.A(1) * Tm.A(1);
-  for(int i = 2; i < N; i++)
+  for(int i = 2; i < N; ++i)
     {
       //scales as m^3 k^2 d + m^2 k^3 d^2. What in my case?
       L = L * jpdag.A(i) * Tndag.A(i) * jp.A(i) * Tm.A(i);
@@ -148,6 +170,37 @@ check_chebyshevs(MPOt<Tensor> H,
   nmultMPO(Unm1, Unm1, Unm12);
   std::cout << "T,U squares finished";
   check(magdiff(sum(Tn2, Unm12) , sum((-1)*H2Unm12, eye(Tn2.sites()))), 0, "Pell equation");
+}
+
+//TODO: when I get runtime checks working, this needs some
+template <class Tensor>
+std::vector<std::complex<double>>
+all_single_mu(MPOt<Tensor> const&H,
+	      MPOt<Tensor> const&j,
+	      std::ofstream& realmu_file,
+	      std::ofstream& imagmu_file,
+	      std::ofstream& chebbd_file,
+	      std::ofstream& chsing_file,
+	      int N, int Maxm, int prog_per)
+{
+  std::vector<std::complex<double>>(N,0) mu;
+  I = eye(H.sites);
+
+  MPOt<Tensor> Tn = I;
+  MPOt<Tensor> Tnm1 = I;
+
+  for(n = 0; n < N; n++)
+    {
+      mu[n] = single_mu(Tn, j);
+      realmu_file << real(mu[n]) << " ";
+      imagmu_file << imag(mu[n]) << " ";
+      chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
+      
+      if(0 == n) { Tm   = H; Tmm1 = I; }
+      // else get the Chebyshevs moved up for the next iteration
+      else       { advance_chebyshevs(Tn, Tnm1, H, Maxm); }
+    }
+  return mu
 }
 
 // Miles probably has a matrix class that's better than this
