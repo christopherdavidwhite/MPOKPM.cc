@@ -183,24 +183,24 @@ all_single_mu(MPOt<Tensor> const&H,
 	      std::ofstream& chsing_file,
 	      int N, int Maxm, int prog_per)
 {
-  std::vector<std::complex<double>>(N,0) mu;
-  I = eye(H.sites);
+  std::vector<std::complex<double>> mu(N,0);
+  IQMPO I = eye(H.sites);
 
   MPOt<Tensor> Tn = I;
   MPOt<Tensor> Tnm1 = I;
 
-  for(n = 0; n < N; n++)
+  for(int n = 0; n < N; n++)
     {
       mu[n] = single_mu(Tn, j);
       realmu_file << real(mu[n]) << " ";
       imagmu_file << imag(mu[n]) << " ";
       chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
       
-      if(0 == n) { Tm   = H; Tmm1 = I; }
+      if(0 == n) { Tn   = H; Tnm1 = I; }
       // else get the Chebyshevs moved up for the next iteration
       else       { advance_chebyshevs(Tn, Tnm1, H, Maxm); }
     }
-  return mu
+  return mu;
 }
 
 // Miles probably has a matrix class that's better than this
