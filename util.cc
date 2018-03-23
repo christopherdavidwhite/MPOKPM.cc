@@ -2,6 +2,7 @@
 
 #include "itensor/mps/autompo.h"
 #include "itensor/mps/sites/spinhalf.h"
+#include "itensor/decomp.h"
 
 #ifndef MPOKPM_UTIL
 #define MPOKPM_UTIL
@@ -62,6 +63,33 @@ std::tuple<IQMPO,std::vector<double>>
 
   return std::make_tuple(H, fields);
 }
+
+
+// cf http://itensor.org/docs.cgi?page=formulas/entanglement_mps
+// Note that this changes the location of the orthogonality center!
+//
+// TODO need to understand C++ type system well enough to make this an
+// MPS fn
+template <class Tensor>
+Spectrum
+entanglement_spectrum(MPOt<Tensor> psi, int b)
+{
+  psi.position(b); 
+
+  //Here assuming an MPS of ITensors, but same code works
+  //for IQMPS by replacing ITensor -> IQTensor
+
+  //Compute two-site wavefunction for sites (b,b+1)
+  auto wf = psi.A(b)*psi.A(b+1);
+
+  //SVD this wavefunction to get the spectrum
+  //of density-matrix eigenvalues
+  auto U = psi.A(b);
+  IQTensor S,V;
+  auto spectrum = svd(wf,U,S,V);
+  return spectrum;
+}
+
 
 
 #endif //#ifndef MPOKPM_UTIL

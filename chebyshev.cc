@@ -12,10 +12,13 @@ using namespace itensor;
 template <class Tensor>
 std::complex<double>
 single_mu(MPOt<Tensor> const& Tn,
-	  MPOt<Tensor> const& op )
+	  MPOt<Tensor> const& opp )
 {
 
   //just a transpose
+  //first copy
+  MPOt<Tensor> op = opp;
+  //then change primelevels
   op.mapprime(1,2);
   op.mapprime(0,1);
   op.mapprime(2,0);
@@ -184,7 +187,7 @@ all_single_mu(MPOt<Tensor> const&H,
 	      int N, int Maxm, int prog_per)
 {
   std::vector<std::complex<double>> mu(N,0);
-  IQMPO I = eye(H.sites);
+  IQMPO I = eye(H.sites());
 
   MPOt<Tensor> Tn = I;
   MPOt<Tensor> Tnm1 = I;
@@ -195,7 +198,13 @@ all_single_mu(MPOt<Tensor> const&H,
       realmu_file << real(mu[n]) << " ";
       imagmu_file << imag(mu[n]) << " ";
       chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
-      
+
+      auto spectrum = entanglement_spectrum(Tn, Tn.N()/2);
+      for(double s : spectrum.eigs()) { chsing_file << s << " " << std::flush;}
+      chsing_file << "\n";
+
+      if (n % prog_per == 0) { std::cout << n << " " << maxM(Tn) << "\n"; }
+    
       if(0 == n) { Tn   = H; Tnm1 = I; }
       // else get the Chebyshevs moved up for the next iteration
       else       { advance_chebyshevs(Tn, Tnm1, H, Maxm); }
