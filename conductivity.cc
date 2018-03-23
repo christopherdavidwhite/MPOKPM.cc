@@ -35,7 +35,7 @@ int main(int argc, char **argv)
   
   int Maxm = 32; // Bond dimension cutoff. This is also pretty small,
 		 // though we may be able to get away with it
-  int s = 0;
+  uint s = 0;
   double hz = 1.0;
   std::string filename = "/tmp/conductivity.txt";
 

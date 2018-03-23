@@ -50,7 +50,7 @@ std::tuple<IQMPO,std::vector<double>>
     {
       H_ampo += 0.5,"S+",b,"S-",b+1;
       H_ampo += 0.5,"S-",b,"S+",b+1;
-      H_ampo +=     "Sz",b,"Sz",b+1;
+      H_ampo += 1.0,"Sz",b,"Sz",b+1;
     }
   
   for(int b = 1; b <= L; ++b)
