@@ -12,7 +12,7 @@ using namespace itensor;
 // prime level quite right, hence messes up the contractions.
 template <class Tensor>
 std::complex<double>
-single_mu(MPOt<Tensor> const& Tn,
+double_mu(MPOt<Tensor> const& Tn,
 	  MPOt<Tensor> const& Tm,
 	  MPOt<Tensor> const& j)
 	  
@@ -27,7 +27,6 @@ single_mu(MPOt<Tensor> const& Tn,
   auto jp    = j;  
   auto jpdag = j;
   
-
   jp.mapprime(1,2);
   jp.mapprime(0,1);
 
@@ -156,7 +155,7 @@ check_chebyshevs(MPOt<Tensor> H,
 // this is the simplest thing.
 template <class Tensor>
 std::vector<std::vector<std::complex<double>> >
-all_mu(MPOt<Tensor> const& H,
+all_double_mu(MPOt<Tensor> const& H,
        MPOt<Tensor> const& j,
        std::ofstream& realmu_file,
        std::ofstream& imagmu_file,
@@ -212,7 +211,7 @@ all_mu(MPOt<Tensor> const& H,
 	imagmu_file << 0.0 << " ";
       }
     for (int m = n; m < N; m++) {
-      mu[n][m] = mu[m][n] = single_mu(Tn,Tm,j);
+      mu[n][m] = mu[m][n] = double_mu(Tn,Tm,j);
       realmu_file << real(mu[m][n]) << " ";
       imagmu_file << imag(mu[m][n]) << " ";
 

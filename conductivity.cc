@@ -154,36 +154,23 @@ int main(int argc, char **argv)
   
   //set up random number generation
   //cf https://isocpp.org/files/papers/n3551.pdf
-  
   std::default_random_engine e{s};
-  std::uniform_real_distribution<double> d(0.0,1.0);
   
   SiteSet sites = SpinHalf(L);
 
-  //construct our random-field Heisenberg
-  //TODO: check factor of two
-  auto H_ampo = AutoMPO(sites);
-  //++b or b++?
-  for(int b = 1; b < L; ++b)
-    {
-      H_ampo += 0.5,"S+",b,"S-",b+1;
-      H_ampo += 0.5,"S-",b,"S+",b+1;
-      H_ampo +=     "Sz",b,"Sz",b+1;
-    }
+  std::vector<double> hzs;
+  IQMPO H;
+  std::tie(H, hzs) = rfheis(sites, hz, e);
 
-  //for bandwidth upper bound
-  double sumhzj = 0.0;
-  for(int b = 1; b <= L; ++b)
-    {
-      double hzj = hz * (2*d(e) - 1);
-      disout_file << hzj << " ";
-      sumhzj += std::abs(hzj);
-      H_ampo += hzj, "Sz",b;
-    }
-  disout_file << "\n";
-  auto H = IQMPO(H_ampo);
   // Normalize the hamiltonian so its bandwidth is in [-1,1]
   // H = H/(3*(L-1) + sum(abs.(hj)))
+  double sumhzj = 0.0;
+  for(int b = 0; b < L; ++b)
+    {
+      disout_file << hzs[b] << " ";
+      sumhzj += std::abs( hzs[b] );
+    }
+  disout_file << "\n";
   H *= (1.0/(3*(L-1) + sumhzj));
 
   //construct current mpo
@@ -200,7 +187,7 @@ int main(int argc, char **argv)
   auto j = IQMPO(j_ampo);
 
   auto t0 = std::chrono::high_resolution_clock::now();
-  auto mu = all_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, 1);
+  auto mu = all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, 1);
   auto t1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> computation_time = t1 - t0;
   timing_file << computation_time.count() << "\n";
