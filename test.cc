@@ -5,8 +5,10 @@
 #include <complex>
 #include <gtest/gtest.h>
 #include <tgmath.h>
-#define TESTING true 
-#include "conductivity.cc" //hack
+#define TESTING true
+ 
+#include "chebyshev.cc"
+#include "util.cc"
 
 
 namespace {
@@ -54,6 +56,7 @@ TEST_F(ConductivityTest, RandomParamagnetMu) {
     
   std::ofstream realmu_file("conductivity.test.re");
   std::ofstream imagmu_file("conductivity.test.im");
+  std::ofstream chebbd_file("conductivity.test.chB");
   
   int Maxm   = 1000;
   int N      = 4;
@@ -61,7 +64,7 @@ TEST_F(ConductivityTest, RandomParamagnetMu) {
 
   double shzl2 = 0;     for (double& thz : hz) { shzl2 += pow(thz,2); }
   double shzlhzlp1 = 0; for (int n = 0; n < L; n++) { shzlhzlp1 += hz[n]*hz[n+1]; }
-  auto mu = all_mu(random_paramagnet, j, realmu_file, imagmu_file, N, Maxm, 1);
+  auto mu = all_mu(random_paramagnet, j, realmu_file, imagmu_file, chebbd_file,N, Maxm, 1);
   double mu00 = pow(ups,2) * pow(2, L - 1) * (L-1);
   double mu02 = pow(ups,2) * pow(2, L-1) * ((L-1) * (2*shzl2 - 1) - 4*shzlhzlp1);
   
