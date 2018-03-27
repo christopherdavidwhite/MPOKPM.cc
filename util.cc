@@ -64,7 +64,8 @@ std::tuple<IQMPO,std::vector<double>, double>
     }
   auto H = IQMPO(H_ampo);
 
-  double opnorm_bound = 3*(L-1) + sumhzj;
+  //operator norm is bounded by sum of operator norms of terms
+  double opnorm_bound = 3*(L-1)*0.25 + sumhzj*0.5;
   return std::make_tuple(H, fields, opnorm_bound);
 }
 
