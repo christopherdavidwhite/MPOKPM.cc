@@ -36,7 +36,8 @@ operatornorm(MPOt<Tensor> const& B)
 }
 
 //construct our random-field Heisenberg Hamiltonian
-std::tuple<IQMPO,std::vector<double>>
+//returns a tuple of IQMPO, fields, and upper bound on operator norm
+std::tuple<IQMPO,std::vector<double>, double>
   rfheis(SiteSet sites, double hz, std::default_random_engine e)
 {
   //cf https://isocpp.org/files/papers/n3551.pdf
@@ -52,18 +53,20 @@ std::tuple<IQMPO,std::vector<double>>
       H_ampo += 0.5,"S-",b,"S+",b+1;
       H_ampo += 1.0,"Sz",b,"Sz",b+1;
     }
-  
+
+  double sumhzj = 0;
   for(int b = 1; b <= L; ++b)
     {
       double hzj = hz * (2*d(e) - 1);
+      sumhzj += hzj;
       fields.push_back(hzj);
       H_ampo += hzj, "Sz",b;
     }
   auto H = IQMPO(H_ampo);
 
-  return std::make_tuple(H, fields);
+  double opnorm_bound = 3*(L-1) + sumhzj;
+  return std::make_tuple(H, fields, opnorm_bound);
 }
-
 
 // cf http://itensor.org/docs.cgi?page=formulas/entanglement_mps
 // Note that this changes the location of the orthogonality center!
