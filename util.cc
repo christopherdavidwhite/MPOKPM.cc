@@ -58,7 +58,7 @@ std::tuple<IQMPO,std::vector<double>, double>
   for(int b = 1; b <= L; ++b)
     {
       double hzj = hz * (2*d(e) - 1);
-      sumhzj += hzj;
+      sumhzj += std::abs(hzj);
       fields.push_back(hzj);
       H_ampo += hzj, "Sz",b;
     }
