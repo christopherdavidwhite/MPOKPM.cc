@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 		 // though we may be able to get away with it
   uint s = 0;
   double hz = 1.0;
-  std::string filename = "/tmp/conductivity.txt";
+  std::string filename = "/tmp/dos.txt";
 
 
   //==============================================================
