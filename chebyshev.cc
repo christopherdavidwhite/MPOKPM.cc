@@ -76,12 +76,43 @@ double_mu(MPOt<Tensor> const& Tn,
 }
 
 template <class Tensor>
+MPOt<Tensor>
+next_chebyshev(MPOt<Tensor> const& Tn,
+			      MPOt<Tensor> const& Tnm1,
+			      MPOt<Tensor> const& H,
+			      int Maxm)
+{
+  MPOt<Tensor> C;
+
+  // We don't want to truncate during nmultMPO---that would truncate
+  // at each bond as we zip up from left to right, which is very
+  // wrong. We do still want nix the numerical noise,
+  // though. Frobenius norm is submultiplicative, so we take a cutoff
+  // like 1e-14 * (upper bound on Frobenius norm of H*Tn).
+  double cutoff = 1e-14;//*norm(H)*norm(Tn);
+  
+  // Multiply Tn by H and store the result in C. (Fortran idiom.) This
+  // is probably the slowest part.
+  
+  nmultMPO(Tn, H, C, {"Cutoff",cutoff}); 
+  C *= 2;
+  C.orthogonalize({"Maxm", Maxm, "Cutoff", 1e-14});
+
+  //Probably second slowest step.
+  C.plusEq( (-1)* Tnm1, {"Cutoff",cutoff}) ;
+  C.orthogonalize({"Maxm", Maxm, "Cutoff", 1e-14});
+  
+  return C;
+}
+template <class Tensor>
 void
 advance_chebyshevs(MPOt<Tensor>& Tn,
 		   MPOt<Tensor>& Tnm1,
 		   MPOt<Tensor> const& H,
 		   int Maxm)
 {
+  std::cerr << "Called advance_chebyshevs. I think this is buggy!";
+  exit(1);
   MPOt<Tensor> C;
 
   // We don't want to truncate during nmultMPO---that would truncate
@@ -96,11 +127,11 @@ advance_chebyshevs(MPOt<Tensor>& Tn,
   
   nmultMPO(Tn, H, C, {"Cutoff",cutoff}); 
   C *= 2;
-  C.orthogonalize({"Maxm", Maxm});
+  C.orthogonalize({"Maxm", Maxm, "Cutoff", 1e-14});
 
   //Probably second slowest step.
   C.plusEq( (-1)* Tnm1, {"Cutoff",cutoff}) ;
-  C.orthogonalize({"Maxm", Maxm});
+  C.orthogonalize({"Maxm", Maxm, "Cutoff", 1e-14});
   
   /* This next bit is weird but cool to me, the C++ newbie.
 
@@ -189,7 +220,8 @@ all_single_mu(MPOt<Tensor> const&H,
   std::vector<std::complex<double>> mu(N,0);
   IQMPO I = eye(H.sites());
 
-  MPOt<Tensor> Tn = I;
+  int L = H.N();
+  MPOt<Tensor> Tn = I*pow(2.0,-L/2);
   MPOt<Tensor> Tnm1 = I;
 
   for(int n = 0; n < N; n++)
@@ -200,14 +232,25 @@ all_single_mu(MPOt<Tensor> const&H,
       chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
 
       auto spectrum = entanglement_spectrum(Tn, Tn.N()/2);
-      for(double s : spectrum.eigs()) { chsing_file << s << " " << std::flush;}
+      for(double s : spectrum.eigs()) { if (s > 1e-14){chsing_file  << s << " " << std::flush;}}
       chsing_file << "\n";
 
       if (n % prog_per == 0) { std::cout << n << " " << maxM(Tn) << "\n"; }
     
-      if(0 == n) { Tn   = H; Tnm1 = I; }
+      if(0 == n) {
+	Tn   = H*pow(2.0,-L/2);
+	Tnm1 = I*pow(2.0,-L/2);
+	Tn.orthogonalize();
+	Tnm1.orthogonalize();
+      }
       // else get the Chebyshevs moved up for the next iteration
-      else       { advance_chebyshevs(Tn, Tnm1, H, Maxm); }
+      else
+	{
+	  MPOt<Tensor> hold = next_chebyshev(Tn, Tnm1, H, Maxm);
+	  Tnm1 = Tn; //these copy: not great
+	  Tn = hold; 
+	}
+      
     }
   return mu;
 }
