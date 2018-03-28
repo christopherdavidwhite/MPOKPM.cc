@@ -168,6 +168,8 @@ int main(int argc, char **argv)
   std::tie(H, hzs, opnorm_bound) = rfheis(sites, hz, e);
   H *= 1.0/opnorm_bound;
 
+  std::cout << "tr H^2 " << single_mu(H,H) << "\n";
+
   //write the disorder to file
   for(int b = 0; b < L; ++b) { disout_file << hzs[b] << " "; }
   disout_file << "\n";
