@@ -100,9 +100,6 @@ next_chebyshev(MPOt<Tensor> const& Tn,
   C.position(L,{"Maxm", Maxm, "Cutoff", 1e-14});
   C.position(1,{"Maxm", Maxm, "Cutoff", 1e-14});
 
-  std::cout << "Tnm1 " << single_mu(Tnm1,Tnm1) <<  "\n";
-  std::cout << "Tn " << single_mu(Tn,Tn) << "\n";
-  std::cout << "H Tn " << single_mu(C,C) << "\n";
   //Probably second slowest step.
   C.plusEq( (-1)* Tnm1, {"Cutoff",1e-30}) ;
 
