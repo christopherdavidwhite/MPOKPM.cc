@@ -324,18 +324,27 @@ all_double_mu(MPOt<Tensor> const& H,
       imagmu_file << imag(mu[m][n]) << " ";
 
       // Once again, this 0 == m case code copies. That's fine!
-      // Those're really small MPOs, and we only do it once! We could
+      //
       // probably be clever and *not* copy, but that would require
       // cleverness and care in a whole bunch of places and seems
       // awfully easy to mess up in some subtle way.
       if(0 == m) { Tm   = H; Tmm1 = I; }
       // else get the Chebyshevs moved up for the next iteration
-      else       { advance_chebyshevs(Tm, Tmm1, H, Maxm); }
+      else
+	{
+	  MPOt<Tensor> hold = next_chebyshev(Tm, Tmm1, H, Maxm);
+	  Tmm1 = Tm; //these copy: not great
+	  Tm = hold;
+	}
+
 #ifdef CHECK
       if(0 == m) { Um   = 2*H; Umm1 = I; }
       else
 	{
-	  advance_chebyshevs(Um, Umm1, H, Maxm);
+	  
+	  MPOt<Tensor> hold = next_chebyshev(Um, Umm1, H, Maxm);
+	  Umm1 = Tn; //these copy: not great
+	  Um = hold; 
 	  check_chebyshevs(H, H2, Tn, Tnm1, Tnm2, Um, Umm1, Umm2);
 	} 
 #endif
@@ -345,7 +354,11 @@ all_double_mu(MPOt<Tensor> const& H,
     imagmu_file << "\n";
       
     if(0 == n) { Tn   = H; Tnm1 = I; }
-    else       { advance_chebyshevs(Tn, Tnm1, H, Maxm); }
+    else       {
+      MPOt<Tensor> hold = next_chebyshev(Tn, Tnm1, H, Maxm);
+      Tnm1 = Tn; //these copy: not great
+      Tn = hold; 
+    }
     chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
     
 #ifdef CHECK
