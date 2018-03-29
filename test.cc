@@ -68,8 +68,8 @@ TEST_F(ConductivityTest, RandomParamagnetMu) {
   double mu00 = pow(ups,2) * pow(2, L - 1) * (L-1);
   double mu02 = pow(ups,2) * pow(2, L-1) * ((L-1) * (2*shzl2 - 1) - 4*shzlhzlp1);
   
-  EXPECT_NEAR(real(single_mu(I,I,j)), mu00 , 1e-10);
-  EXPECT_NEAR(imag(single_mu(I,I,j)), 0, 1e-10);
+  EXPECT_NEAR(real(double_mu(I,I,j)), mu00 , 1e-10);
+  EXPECT_NEAR(imag(double_mu(I,I,j)), 0, 1e-10);
   
   EXPECT_NEAR(real(mu[0][0]), mu00, 1e-10);
   EXPECT_NEAR(imag(mu[0][0]), 0, 1e-10);
