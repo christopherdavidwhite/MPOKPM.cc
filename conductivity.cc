@@ -160,18 +160,13 @@ int main(int argc, char **argv)
 
   std::vector<double> hzs;
   IQMPO H;
-  std::tie(H, hzs) = rfheis(sites, hz, e);
+  double opnorm_bound;
+  std::tie(H, hzs, opnorm_bound) = rfheis(sites, hz, e);
+  H *= 1.0/opnorm_bound;
 
-  // Normalize the hamiltonian so its bandwidth is in [-1,1]
-  // H = H/(3*(L-1) + sum(abs.(hj)))
-  double sumhzj = 0.0;
-  for(int b = 0; b < L; ++b)
-    {
-      disout_file << hzs[b] << " ";
-      sumhzj += std::abs( hzs[b] );
-    }
+  //write the disorder to file
+  for(int b = 0; b < L; ++b) { disout_file << hzs[b] << " "; }
   disout_file << "\n";
-  H *= (1.0/(3*(L-1) + sumhzj));
 
   //construct current mpo
   auto j_ampo = AutoMPO(sites);
