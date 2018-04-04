@@ -169,6 +169,7 @@ int main(int argc, char **argv)
   H *= 1.0/opnorm_bound;
 
   std::cout << "tr H^2 " << single_mu(H,H) << "\n";
+  std::cout << "opnorm_bound " << opnorm_bound << "\n";
 
   //write the disorder to file
   for(int b = 0; b < L; ++b) { disout_file << hzs[b] << " "; }
