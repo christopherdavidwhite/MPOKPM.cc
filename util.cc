@@ -69,6 +69,31 @@ std::tuple<IQMPO,std::vector<double>, double>
   return std::make_tuple(H, fields, opnorm_bound);
 }
 
+std::tuple<IQMPO,std::vector<double>, double>
+rpara(SiteSet sites, double hz, std::default_random_engine e)
+{
+  //cf https://isocpp.org/files/papers/n3551.pdf
+  std::uniform_real_distribution<double> d(0.0,1.0);
+  std::vector<double> fields;
+  auto L = sites.N();
+
+  auto H_ampo = AutoMPO(sites);
+  
+  double sumhzj = 0;
+  for(int b = 1; b <= L; ++b)
+    {
+      double hzj = hz * (2*d(e) - 1);
+      sumhzj += std::abs(hzj);
+      fields.push_back(hzj);
+      H_ampo += hzj, "Sz",b;
+    }
+  auto H = IQMPO(H_ampo);
+
+  //operator norm is bounded by sum of operator norms of terms
+  double opnorm_bound = 3*(L-1)*0.25 + sumhzj*0.5;
+  return std::make_tuple(H, fields, opnorm_bound);
+}
+
 // cf http://itensor.org/docs.cgi?page=formulas/entanglement_mps
 // Note that this changes the location of the orthogonality center!
 //
