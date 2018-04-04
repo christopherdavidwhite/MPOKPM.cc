@@ -52,7 +52,7 @@ function main(args)
     #plot bond dim. as fn of chebyshev order
     nM = readdlm("$ifn.chM")
     @show nM
-    plot(nM[:,1], nM[:,2], ".")
+    semilogy(nM[:,1], nM[:,2], ".")
     xlabel("Chebyshev order \$n\$", size=20)
     ylabel("bond dimension M", size=20)
     savefig("$ofn-plt-chM.pdf", bbox_inches="tight")
