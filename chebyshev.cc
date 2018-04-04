@@ -78,19 +78,12 @@ double_mu(MPOt<Tensor> const& Tn,
 template <class Tensor>
 MPOt<Tensor>
 next_chebyshev(MPOt<Tensor> const& Tn,
-			      MPOt<Tensor> const& Tnm1,
-			      MPOt<Tensor> const& H,
-			      int Maxm)
+	       MPOt<Tensor> const& Tnm1,
+	       MPOt<Tensor> const& H,
+	       int Maxm, double cutoff)
 {
   MPOt<Tensor> C;
-
-  // We don't want to truncate during nmultMPO---that would truncate
-  // at each bond as we zip up from left to right, which is very
-  // wrong. We do still want nix the numerical noise,
-  // though. Frobenius norm is submultiplicative, so we take a cutoff
-  // like 1e-14 * (upper bound on Frobenius norm of H*Tn).
-  double cutoff = 1e-14;//*norm(H)*norm(Tn);
-  
+ 
   // Multiply Tn by H and store the result in C. (Fortran idiom.) This
   // is probably the slowest part.
 
@@ -218,7 +211,7 @@ all_single_mu(MPOt<Tensor> const&H,
 	      std::ofstream& imagmu_file,
 	      std::ofstream& chebbd_file,
 	      std::ofstream& chsing_file,
-	      int N, int Maxm, int prog_per)
+	      int N, int Maxm, double cutoff, int prog_per)
 {
   std::vector<std::complex<double>> mu(N,0);
   IQMPO I = eye(H.sites());
@@ -249,7 +242,7 @@ all_single_mu(MPOt<Tensor> const&H,
       // else get the Chebyshevs moved up for the next iteration
       else
 	{
-	  MPOt<Tensor> hold = next_chebyshev(Tn, Tnm1, H, Maxm);
+	  MPOt<Tensor> hold = next_chebyshev(Tn, Tnm1, H, Maxm, cutoff);
 	  Tnm1 = Tn; //these copy: not great
 	  Tn = hold; 
 	}
@@ -264,11 +257,11 @@ all_single_mu(MPOt<Tensor> const&H,
 template <class Tensor>
 std::vector<std::vector<std::complex<double>> >
 all_double_mu(MPOt<Tensor> const& H,
-       MPOt<Tensor> const& j,
-       std::ofstream& realmu_file,
-       std::ofstream& imagmu_file,
-       std::ofstream& chebbd_file,
-       int N, int Maxm, int prog_per)
+	      MPOt<Tensor> const& j,
+	      std::ofstream& realmu_file,
+	      std::ofstream& imagmu_file,
+	      std::ofstream& chebbd_file,
+	      int N, int Maxm, double cutoff, int prog_per)
 {
   //mu should be real for physical reasons. Important not to take real
   //part until we really mean to, though: imag could be clue to
@@ -332,7 +325,7 @@ all_double_mu(MPOt<Tensor> const& H,
       // else get the Chebyshevs moved up for the next iteration
       else
 	{
-	  MPOt<Tensor> hold = next_chebyshev(Tm, Tmm1, H, Maxm);
+	  MPOt<Tensor> hold = next_chebyshev(Tm, Tmm1, H, Maxm, cutoff);
 	  Tmm1 = Tm; //these copy: not great
 	  Tm = hold;
 	}
@@ -342,7 +335,7 @@ all_double_mu(MPOt<Tensor> const& H,
       else
 	{
 	  
-	  MPOt<Tensor> hold = next_chebyshev(Um, Umm1, H, Maxm);
+	  MPOt<Tensor> hold = next_chebyshev(Um, Umm1, H, Maxm, cutoff);
 	  Umm1 = Tn; //these copy: not great
 	  Um = hold; 
 	  check_chebyshevs(H, H2, Tn, Tnm1, Tnm2, Um, Umm1, Umm2);
@@ -355,7 +348,7 @@ all_double_mu(MPOt<Tensor> const& H,
       
     if(0 == n) { Tn   = H; Tnm1 = I; }
     else       {
-      MPOt<Tensor> hold = next_chebyshev(Tn, Tnm1, H, Maxm);
+      MPOt<Tensor> hold = next_chebyshev(Tn, Tnm1, H, Maxm, cutoff);
       Tnm1 = Tn; //these copy: not great
       Tn = hold; 
     }

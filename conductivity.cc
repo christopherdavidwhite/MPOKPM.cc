@@ -37,6 +37,7 @@ int main(int argc, char **argv)
 		 // though we may be able to get away with it
   uint s = 0;
   double hz = 1.0;
+  double cutoff = 1e-14;
   std::string filename = "/tmp/conductivity.txt";
 
 
@@ -88,6 +89,13 @@ int main(int argc, char **argv)
 	case 'h':
 	  hz = std::stod(optarg);
 	  std::cout << "hz = " << hz << "\n";
+	  break;
+	  
+	case 'e':
+	  cutoff = pow(10, -std::stod(optarg));
+	  std::cout << "cutoff = " << cutoff << "\n";
+	  break;
+	  
         case 'f':
 	  filename = optarg;
 	  std::cout <<  filename << "\n";
@@ -182,7 +190,7 @@ int main(int argc, char **argv)
   auto j = IQMPO(j_ampo);
 
   auto t0 = std::chrono::high_resolution_clock::now();
-  auto mu = all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, 1);
+  auto mu = all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, cutoff, 1);
   auto t1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> computation_time = t1 - t0;
   timing_file << computation_time.count() << "\n";

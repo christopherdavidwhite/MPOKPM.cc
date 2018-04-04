@@ -39,6 +39,7 @@ int main(int argc, char **argv)
   double hz = 1.0;
   std::string filename = "/tmp/dos.txt";
 
+  double cutoff = 1e-14;
 
   //==============================================================
   //Parse Command Line Arguments
@@ -88,6 +89,12 @@ int main(int argc, char **argv)
 	case 'h':
 	  hz = std::stod(optarg);
 	  std::cout << "hz = " << hz << "\n";
+
+	case 'e':
+	  cutoff = pow(10, -std::stod(optarg));
+	  std::cout << "cutoff = " << cutoff << "\n";
+	  break;
+	  
         case 'f':
 	  filename = optarg;
 	  std::cout <<  filename << "\n";
@@ -179,7 +186,7 @@ int main(int argc, char **argv)
   // compute mu
 
   auto t0 = std::chrono::high_resolution_clock::now();
-  auto mu = all_single_mu(H, eye(sites), realmu_file, imagmu_file, chebbd_file, chsing_file, N, Maxm, 1);
+  auto mu = all_single_mu(H, eye(sites), realmu_file, imagmu_file, chebbd_file, chsing_file, N, Maxm, cutoff, 1);
   auto t1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> computation_time = t1 - t0;
   timing_file << computation_time.count() << "\n";
