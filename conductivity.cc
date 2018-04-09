@@ -190,7 +190,7 @@ int main(int argc, char **argv)
   auto j = IQMPO(j_ampo);
 
   auto t0 = std::chrono::high_resolution_clock::now();
-  auto mu = all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, cutoff, 1);
+  auto mu = memoryprofligate_all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, cutoff, 1);
   auto t1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> computation_time = t1 - t0;
   timing_file << computation_time.count() << "\n";

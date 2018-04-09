@@ -161,6 +161,38 @@ advance_chebyshevs(MPOt<Tensor>& Tn,
 }
 
 template <class Tensor>
+std::vector<MPOt<Tensor>>
+list_chebyshevs(MPOt<Tensor> H, int N, int Maxm, double cutoff, int prog_per)
+{
+  std::vector<MPOt<Tensor>> lst;
+  lst.reserve(N);
+
+  auto I = eye(H.sites());
+
+  int L = H.N();
+  MPOt<Tensor> Tn = I*pow(2.0,-L/2);
+  MPOt<Tensor> Tnm1 = I;
+
+  for(int n = 0; n < N; n++)
+    {
+      lst.push_back(Tn);
+      if (n % prog_per == 0) { std::cout << n << " " << maxM(Tn) << "\n"; }
+    
+      if(0 == n) {
+	Tn   = H*pow(2.0,-L/2);
+	Tnm1 = I*pow(2.0,-L/2);
+	Tn.orthogonalize();
+	Tnm1.orthogonalize();
+      } else { // get the Chebyshevs moved up for the next iteration
+	MPOt<Tensor> hold = next_chebyshev(Tn, Tnm1, H, Maxm, cutoff);
+	Tnm1 = Tn; //these copy: not great
+	Tn = hold; 
+      }
+    }
+  return lst;
+}
+
+template <class Tensor>
 void
 check_chebyshevs(MPOt<Tensor> H,
 		 MPOt<Tensor> H2,
@@ -362,6 +394,55 @@ all_double_mu(MPOt<Tensor> const& H,
 	check_chebyshevs(H, H2, Tn, Tnm1, Tnm2, Un, Unm1, Unm2);
       } 
 #endif
+    
+    if (n % prog_per == 0) { std::cout << n << "\n"; }
+  }
+  return mu;
+}
+
+
+template <class Tensor>
+std::vector<std::vector<std::complex<double>> >
+memoryprofligate_all_double_mu(MPOt<Tensor> const& H,
+			       MPOt<Tensor> const& j,
+			       std::ofstream& realmu_file,
+			       std::ofstream& imagmu_file,
+			       std::ofstream& chebbd_file,
+			       int N, int Maxm, double cutoff, int prog_per)
+{
+  //mu should be real for physical reasons. Important not to take real
+  //part until we really mean to, though: imag could be clue to
+  //instability.
+  std::vector<std::vector<std::complex<double>>> mu;
+  mu.reserve(N);
+
+  //initialize mu to be 0
+  for (int i = 0; i < N; i++) {
+    mu.push_back(std::vector<std::complex<double>>(N,0));
+  }
+
+  //TODO this is eye
+  auto I_ampo = AutoMPO(H.sites());
+  I_ampo += 1.0, "Id", 1;
+  auto I = IQMPO(I_ampo);
+  
+  std::vector<MPOt<Tensor>> Tn = list_chebyshevs(H, N, Maxm, cutoff, prog_per);
+    
+  for (int n = 0; n < N; n++) {
+    for (int m = 0; m < n; m++)
+      {
+	realmu_file << 0.0 << " ";
+	imagmu_file << 0.0 << " ";
+      }
+    chebbd_file << n << " " << maxM(Tn[n]) << "\n" << std::flush;
+    for (int m = n; m < N; m++) {
+      mu[n][m] = mu[m][n] = double_mu(Tn[n],Tn[m],j);
+      realmu_file << real(mu[m][n]) << " ";
+      imagmu_file << imag(mu[m][n]) << " ";
+    }
+    
+    realmu_file << "\n";
+    imagmu_file << "\n";
     
     if (n % prog_per == 0) { std::cout << n << "\n"; }
   }
