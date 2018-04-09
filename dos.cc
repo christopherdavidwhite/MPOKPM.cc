@@ -37,6 +37,7 @@ int main(int argc, char **argv)
 		 // though we may be able to get away with it
   uint s = 0;
   double hz = 1.0;
+  double Q  = 1.0; //scaling factor (on top of opnorm bound)
   std::string filename = "/tmp/dos.txt";
 
   double cutoff = 1e-14;
@@ -58,7 +59,7 @@ int main(int argc, char **argv)
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      char c = getopt_long (argc, argv, "L:M:N:h:f:e:", long_options, &option_index);
+      char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:", long_options, &option_index);
 
       /* Detect the end of the options. */
       if (c == -1)
@@ -100,7 +101,10 @@ int main(int argc, char **argv)
 	  std::cout <<  filename << "\n";
           break;
 
-	  //todo disorder width
+	case 'Q':
+	  Q = std::stod(optarg);
+	  std::cout << "scale" << Q << "\n";
+	  break;
 	  
         case '?':
           /* getopt_long already printed an error message. */
@@ -173,7 +177,7 @@ int main(int argc, char **argv)
   IQMPO H;
   double opnorm_bound;
   std::tie(H, hzs, opnorm_bound) = rfheis(sites, hz, e);
-  H *= 1.0/opnorm_bound;
+  H *= Q/opnorm_bound;
 
   std::cout << "tr H^2 " << single_mu(H,H) << "\n";
   std::cout << "opnorm_bound " << opnorm_bound << "\n";
