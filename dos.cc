@@ -90,6 +90,7 @@ int main(int argc, char **argv)
 	case 'h':
 	  hz = std::stod(optarg);
 	  std::cout << "hz = " << hz << "\n";
+	  break;
 
 	case 'e':
 	  cutoff = pow(10, -std::stod(optarg));
