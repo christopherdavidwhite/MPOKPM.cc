@@ -58,7 +58,7 @@ int main(int argc, char **argv)
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      char c = getopt_long (argc, argv, "L:M:N:h:f:", long_options, &option_index);
+      char c = getopt_long (argc, argv, "L:M:N:h:f:e:", long_options, &option_index);
 
       /* Detect the end of the options. */
       if (c == -1)
