@@ -59,13 +59,15 @@ mkdebugdir:
 
 #parameters for verification
 vL=6
-vN=32
+vN=8
 vM=512
 VDIR=verification-$(DATE)-$(COMMIT)
 vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
 
 #there's almost certainly a cleaner way to do this
-verification: dos
-	mkdir -p verification-$(DATE)-$(COMMIT)
-	./dos -L $(vL) -N $(vN) -M $(vM) -f $(vfn)
+verification: conductivity
+	rm -r $(VDIR)
+	mkdir -p $(VDIR)
+	./conductivity -L $(vL) -N $(vN) -M $(vM) -f $(vfn)
 	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn) -o $(vfn)
+	evince $(vfn)-plt-trTnerr.pdf &
