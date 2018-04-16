@@ -11,7 +11,7 @@ using namespace itensor;
 // compute overlap of Tn with op.
 
 template <class Tensor>
-std::complex<double>
+Tensor
 single_mu(MPOt<Tensor> const& Tn,
 	  MPOt<Tensor> const& opp )
 {
@@ -29,8 +29,7 @@ single_mu(MPOt<Tensor> const& Tn,
     
   auto L = Tn.A(1) * op.A(1);
   for(int i=2; i <= N; ++i) { L = L * Tn.A(i) * op.A(i); }
-  auto z = L.cplx();
-  return z;
+  return L;
 }
 
 /*
@@ -42,7 +41,7 @@ nominally computes a single coefficient mu = Tr[j Tn j Tm], but when
 applied to an algebra of Chebyshevs gives all the mu
 */
 template <class Tensor>
-std::complex<double>
+Tensor
 double_mu(MPOt<Tensor> const& Tn,
 	  MPOt<Tensor> const& Tm,
 	  MPOt<Tensor> const& j)
@@ -80,8 +79,7 @@ double_mu(MPOt<Tensor> const& Tn,
   //scales as m^2 k^2 d
   L = L* jpdag.A(N) * Tndag.A(N) * jp.A(N) * Tm.A(N);
   //PrintData(L);
-  auto z = L.cplx();
-  return z;
+  return L;
 }
 
 template <class Tensor>
@@ -314,7 +312,7 @@ all_single_mu(MPOt<Tensor> const&H,
 
   for(int n = 0; n < N; n++)
     {
-      mu[n] = single_mu(Tn, j);
+      mu[n] = single_mu(Tn, j).cplx();
       realmu_file << real(mu[n]) << " ";
       imagmu_file << imag(mu[n]) << " ";
       chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
@@ -409,7 +407,7 @@ all_double_mu(MPOt<Tensor> const& H,
 	imagmu_file << 0.0 << " ";
       }
     for (int m = n; m < N; m++) {
-      mu[n][m] = mu[m][n] = double_mu(Tn,Tm,j);
+      mu[n][m] = mu[m][n] = double_mu(Tn,Tm,j).cplx();
       realmu_file << real(mu[m][n]) << " ";
       imagmu_file << imag(mu[m][n]) << " ";
 
@@ -470,7 +468,7 @@ all_double_mu(MPOt<Tensor> const& H,
 #endif
     
     chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
-    std::complex<double> chtr = single_mu(Tn, I);
+    std::complex<double> chtr = single_mu(Tn, I).cplx();
     chtrre_file << real(chtr) << " ";
     chtrim_file << real(chtr) << " " ;
     if (n % prog_per == 0) { std::cout << n << "\n"; }
@@ -517,7 +515,7 @@ memoryprofligate_all_double_mu(MPOt<Tensor> const& H,
       }
     chebbd_file << n << " " << maxM(Tn[n]) << "\n" << std::flush;
     for (int m = n; m < N; m++) {
-      mu[n][m] = mu[m][n] = double_mu(Tn[n],Tn[m],j);
+      mu[n][m] = mu[m][n] = double_mu(Tn[n],Tn[m],j).cplx();
       realmu_file << real(mu[m][n]) << " ";
       imagmu_file << imag(mu[m][n]) << " ";
     }
@@ -526,7 +524,7 @@ memoryprofligate_all_double_mu(MPOt<Tensor> const& H,
     imagmu_file << "\n";
     
     chebbd_file << n << " " << maxM(Tn[n]) << "\n" << std::flush;
-    std::complex<double> chtr = single_mu(Tn[n], I);
+    std::complex<double> chtr = single_mu(Tn[n], I).cplx();
     chtrre_file << real(chtr);
     chtrim_file << real(chtr);
     if (n % prog_per == 0) { std::cout << n << "\n"; }
