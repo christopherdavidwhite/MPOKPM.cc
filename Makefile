@@ -4,7 +4,6 @@ LIBRARY_DIR=$(ITENSOR_DIR)
 
 COMMIT=`git log | head -1 | cut -d ' ' -f 2 | cut -b 1-7`
 DATE=`date +%Y-%m-%d`
-VDIR=verification-$(DATE)-$(COMMIT)
 
 ifdef app
 APP=$(app)
@@ -58,16 +57,15 @@ clean:
 mkdebugdir:
 	mkdir -p .debug_objs
 
+#parameters for verification
+vL=6
+vN=32
+vM=512
+VDIR=verification-$(DATE)-$(COMMIT)
+vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
+
 #there's almost certainly a cleaner way to do this
 verification: dos
 	mkdir -p verification-$(DATE)-$(COMMIT)
-	./dos -L 12 -N 32 -M 512 -f $(VDIR)/L12-N32-M512
-	$(JULIA) ./analysis/post-hoc-verification.jl -i $(VDIR)/L12-N32-M512 -o $(VDIR)/L12-N32-M512
-	./dos -L 32 -N 32 -M 512 -f $(VDIR)/L32-N32-M512
-	$(JULIA) ./analysis/post-hoc-verification.jl -i $(VDIR)/L32-N32-M512 -o $(VDIR)/L32-N32-M512
-	./dos -L 64 -N 32 -M 512 -f $(VDIR)/L64-N32-M512
-	$(JULIA) ./analysis/post-hoc-verification.jl -i $(VDIR)/L64-N32-M512 -o $(VDIR)/L64-N32-M512
-	./dos -L 128 -N 32 -M 512 -f $(VDIR)/L128-N32-M512
-	$(JULIA) ./analysis/post-hoc-verification.jl -i  $(VDIR)/L128-N32-M512 -o $(VDIR)/L128-N32-M512
-	./dos -L 256 -N 32 -M 512 -f $(VDIR)/L256-N32-M512
-	$(JULIA) ./analysis/post-hoc-verification.jl -i $(VDIR)/L256-N32-M512 -o $(VDIR)/L256-N32-M512
+	./dos -L $(vL) -N $(vN) -M $(vM) -f $(vfn)
+	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn) -o $(vfn)
