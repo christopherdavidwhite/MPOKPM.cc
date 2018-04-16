@@ -30,7 +30,7 @@ function pauli_matrices_sparse(L :: Int64)
 end
 
 function exact_μ(H :: Array{Float64,2}, j :: Array{Float64,2}, N :: Int)
-    μ = OffsetArray(zeros(N,N), 0:N-1, 0:N-1)
+    μ = zeros(N,N)
     @time d,v = eig(H)
     H = zeros((2,2))
     gc()
@@ -43,15 +43,13 @@ function exact_μ(H :: Array{Float64,2}, j :: Array{Float64,2}, N :: Int)
     v = zeros(2,2)
     gc()
     println("start loop")
-    for n in 0:N-1
-        TnH = cos.(n*acos.(d))
-        #TnHjvT = transpose(TnH .* jv)
-        TnHjvT = Tn
-        @time for m in n:N-1
-            TmH = cos.(m*acos.(d))
+    for n in 1:N
+        TnH = cos.((n-1)*acos.(d))
+        TnHjvT = transpose(TnH .* jv)
+        for m in 1:N
+            TmH = cos.((m-1)*acos.(d))
             μ[n,m] = μ[m,n]= vecdot(TnHjvT, (TmH .* jv))
         end
-        @show n
         TnHjvT = zeros(2,2)
         gc()
     end
@@ -115,11 +113,6 @@ function main(args)
         println("L = $L >= 14: skipping ED check")
     else
 
-        #check DoS trace
-        tnf = open("$ifn.chtrre")
-        trTncc = 2^(L/2)*[parse(Float64, s) for s in split(readline(tnf))]
-        N = length(trTncc)
-        close(tnf)
 
         L = length(hz)
         X,Y,Z,P,M = pauli_matrices_sparse(L)
@@ -128,7 +121,14 @@ function main(args)
         H += 0.25*sum(map((x1,x2) -> x1 * x2, Z[1:end-1], Z[2:end]))
         H += 0.5*sum(hz.*Z)
         H = H/(3*(L-1)*0.25 + sum(abs.(hz))*0.5)
+        Hfull = H |> full |> real
         #@show trace(H^2)
+        
+        #check DoS trace
+        tnf = open("$ifn.chtrre")
+        trTncc = 2^(L/2)*[parse(Float64, s) for s in split(readline(tnf))]
+        N = length(trTncc)
+        close(tnf)
         d,v = H |> full |> eig
 
         trTned = zeros(N)
@@ -142,6 +142,25 @@ function main(args)
         savefig("$ofn-plt-trTnerr.pdf", bbox_inches="tight")
         cla()
         clf()
+
+        #check conductivity coeffs
+        μcc = readdlm("$ifn.re")
+        for n in 1:N
+            for m in n+1:N
+                μcc[m,n] = μcc[n,m]
+            end
+        end
+        j = imag(sum([2*(Y[l]*X[l+1] - X[l]*Y[l+1]) for l in 1:L-1]) |> full)
+        μed = -exact_μ(Hfull,j,N) #minus because I took imag part of j
+
+        diff = 2.0^(-2L)*μed - μcc
+        vmax = diff |> abs |> maximum
+        pcolor(diff, cmap="seismic", vmin=-vmax, vmax=vmax)
+        savefig("$ofn-plt-trTnjTmjerr.pdf", bbox_inches="tight")
+        cla()
+        clf()
+        
+        @show diff |> abs |> maximum 
     end
 end
 main(ARGS)
