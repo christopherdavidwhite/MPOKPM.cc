@@ -64,11 +64,15 @@ TEST_F(ConductivityTest, RandomParamagnetMu) {
 
   double shzl2 = 0;     for (double& thz : hz) { shzl2 += pow(thz,2); }
   double shzlhzlp1 = 0; for (int n = 0; n < L; n++) { shzlhzlp1 += hz[n]*hz[n+1]; }
-  auto mu = all_double_mu(random_paramagnet, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, 1);
-  double mu00 = pow(ups,2) * pow(2, L - 1) * (L-1);
-  double mu02 = pow(ups,2) * pow(2, L-1) * ((L-1) * (2*shzl2 - 1) - 4*shzlhzlp1);
-  
-  EXPECT_NEAR(real(double_mu(I,I,j)), mu00 , 1e-10);
+
+  std::cout << "shzl2 " << shzl2 << "\n";
+  std::cout << "shzlhzlp1 " << shzlhzlp1 << "\n";
+  auto mu = all_double_mu(random_paramagnet, j, realmu_file, imagmu_file, chebbd_file, chsing_file, chtrre_file, chtrim_file,  N, Maxm, cutoff, 1);
+  double mu00 = pow(ups,2) * pow(2, -1) * (L-1);
+  double mu02 = pow(ups,2) * pow(2, -1) * ((L-1) * (2*shzl2 - 1) - 4*shzlhzlp1);
+
+  //note that mu00 has the 2^-L I put in the conductivity calculation
+  EXPECT_NEAR(real(double_mu(I,I,j)), pow(2, L)* mu00 , 1e-10);
   EXPECT_NEAR(imag(double_mu(I,I,j)), 0, 1e-10);
   
   EXPECT_NEAR(real(mu[0][0]), mu00, 1e-10);

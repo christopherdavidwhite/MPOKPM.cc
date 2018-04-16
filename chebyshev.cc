@@ -364,6 +364,8 @@ all_double_mu(MPOt<Tensor> const& H,
   std::vector<std::vector<std::complex<double>>> mu;
   mu.reserve(N);
 
+  int L = H.N();
+
   //initialize mu to be 0
   for (int i = 0; i < N; i++) {
     mu.push_back(std::vector<std::complex<double>>(N,0));
@@ -386,7 +388,7 @@ all_double_mu(MPOt<Tensor> const& H,
   nmultMPO(H,H,H2);
 #endif
     
-  Tn = I;
+  Tn = I*pow(2.0,-L/2);
   Tmm1 = I;
   for (int n = 0; n < N; n++) {
     // we have the chebyshev polynomial Tn. Now walk through the Tms
@@ -416,7 +418,12 @@ all_double_mu(MPOt<Tensor> const& H,
       // probably be clever and *not* copy, but that would require
       // cleverness and care in a whole bunch of places and seems
       // awfully easy to mess up in some subtle way.
-      if(0 == m) { Tm   = H; Tmm1 = I; }
+      if(0 == m) {
+	  Tm   = H*pow(2.0,-L/2);
+	  Tmm1 = I*pow(2.0,-L/2);
+	  Tm.orthogonalize();
+	  Tmm1.orthogonalize();
+	}
       // else get the Chebyshevs moved up for the next iteration
       else
 	{
@@ -441,7 +448,13 @@ all_double_mu(MPOt<Tensor> const& H,
     realmu_file << "\n";
     imagmu_file << "\n";
       
-    if(0 == n) { Tn   = H; Tnm1 = I; }
+    if(0 == n) {
+      Tn   = H*pow(2.0,-L/2);
+      Tnm1 = I*pow(2.0,-L/2);
+      Tn.orthogonalize();
+      Tnm1.orthogonalize();
+    }
+
     else       {
       MPOt<Tensor> hold = next_chebyshev(Tn, Tnm1, H, Maxm, cutoff);
       Tnm1 = Tn; //these copy: not great
