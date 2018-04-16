@@ -471,8 +471,8 @@ all_double_mu(MPOt<Tensor> const& H,
     
     chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
     std::complex<double> chtr = single_mu(Tn, I);
-    chtrre_file << real(chtr);
-    chtrim_file << real(chtr);
+    chtrre_file << real(chtr) << " ";
+    chtrim_file << real(chtr) << " " ;
     if (n % prog_per == 0) { std::cout << n << "\n"; }
   }
   return mu;

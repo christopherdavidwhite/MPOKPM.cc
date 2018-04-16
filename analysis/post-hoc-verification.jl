@@ -29,6 +29,35 @@ function pauli_matrices_sparse(L :: Int64)
     return (X,Y,Z,P,M)
 end
 
+function exact_μ(H :: Array{Float64,2}, j :: Array{Float64,2}, N :: Int)
+    μ = OffsetArray(zeros(N,N), 0:N-1, 0:N-1)
+    @time d,v = eig(H)
+    H = zeros((2,2))
+    gc()
+    
+    jv1 = copy(v)
+    A_mul_B!(jv1,j,v)
+    jv = Ac_mul_B(v,jv1)
+    
+    jv1 = zeros(2,2)
+    v = zeros(2,2)
+    gc()
+    println("start loop")
+    for n in 0:N-1
+        TnH = cos.(n*acos.(d))
+        #TnHjvT = transpose(TnH .* jv)
+        TnHjvT = Tn
+        @time for m in n:N-1
+            TmH = cos.(m*acos.(d))
+            μ[n,m] = μ[m,n]= vecdot(TnHjvT, (TmH .* jv))
+        end
+        @show n
+        TnHjvT = zeros(2,2)
+        gc()
+    end
+    return μ
+end
+
 PyDict(pyimport("matplotlib")["rcParams"])["xtick.labelsize"] = 20
 PyDict(pyimport("matplotlib")["rcParams"])["ytick.labelsize"] = 20
 PyPlot.rc("text", usetex=true)
@@ -82,10 +111,12 @@ function main(args)
     hz = [parse(Float64, s) for s in split(readline(hzf))]
     close(hzf)
     L = length(hz)
-    if L > 14
-        println("L = $L > 14: skipping ED check")
+    if L >= 14
+        println("L = $L >= 14: skipping ED check")
     else
-        tnf = open("$ifn.re")
+
+        #check DoS trace
+        tnf = open("$ifn.chtrre")
         trTncc = 2^(L/2)*[parse(Float64, s) for s in split(readline(tnf))]
         N = length(trTncc)
         close(tnf)
@@ -101,9 +132,10 @@ function main(args)
         d,v = H |> full |> eig
 
         trTned = zeros(N)
-        for n = 0:N-1
-            trTned[n+1] = sum(cos.(n*acos.(d)))
+        for n = 1:N-1
+            trTned[n] = sum(cos.(n*acos.(d)))
         end
+        @show trTned - trTncc
         semilogy(abs.(trTned - trTncc), ".")
         xlabel("n", size=20)
         ylabel("err in trace Tn",size=20)
