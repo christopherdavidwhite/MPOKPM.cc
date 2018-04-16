@@ -195,6 +195,8 @@ int main(int argc, char **argv)
   auto j = IQMPO(j_ampo);
 
   auto t0 = std::chrono::high_resolution_clock::now();
+  std::cout << "dangler?";
+  auto mu = dangler_all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, cutoff, 1);
   if(profligate){
     auto mu = memoryprofligate_all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, cutoff, 1);
   } else {

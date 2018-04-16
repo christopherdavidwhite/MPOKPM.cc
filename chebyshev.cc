@@ -1,10 +1,11 @@
 #include "itensor/mps/autompo.h"
 #include "itensor/mps/sites/spinhalf.h"
 #include "util.cc"
+#include "algebra.cc"
 
 #ifndef MPOKPM_CHEBYSHEV
 #define MPOKPM_CHEBYSHEV
-
+  
 using namespace itensor;
 
 // compute overlap of Tn with op.
@@ -158,6 +159,55 @@ advance_chebyshevs(MPOt<Tensor>& Tn,
      But am I wrong?
   */
   
+}
+
+template <class Tensor>
+MPOt<Tensor>
+dangler_chebyshevs(MPOt<Tensor> H, int N, int Maxm, double cutoff, int prog_per)
+{
+  auto I = eye(H.sites());
+
+  MPOt<Tensor> cheb = oplus(I,H);
+  MPOt<Tensor> iter = oplus(I,H);
+
+    
+  cheb.orthogonalize();
+  iter.orthogonalize();
+
+  //normalization
+  int L = H.N();
+  cheb = cheb*pow(2.0, -L/2);
+
+  //n is the number of Chebyshevs we've already computed.
+  //note that this n is notionally a 1-index: "T1" is identity
+  for(int n = 2; n < N; n++)
+    {
+      if (n % prog_per == 0) { std::cout << n << " " << maxM(cheb) << "\n"; }
+      MPOt<Tensor> store;
+
+      auto i = findtype(cheb.A(1), Dangler);
+      auto j = findtype(iter.A(1), Dangler);
+
+      IQIndex id = i.dag();
+      IQIndex jd = j.dag();
+      IQIndex k  = IQIndex("iq", Index("i",n+1, Dangler, 0), QN(0));
+
+      //bc implementing Cheb. iterations to tensor on
+      auto iterbc = Tensor(k, id,jd);
+      //keep things multiplied by identity
+      for(int l = 1; l <= n; l++) { iterbc.set(k(l),id(l),jd(1), 1.0); }
+      iterbc.set(k(n+1), id(n),   jd(2), 2.0);  //2*H*Tn
+      iterbc.set(k(n+1), id(n-1), jd(1), -1.0); // - Tn-1
+      
+      nmultMPAlgebra(cheb, iter, store, {"Cutoff", 1e-14}); 
+      cheb = store; //copies! Bad! Can go do rvalue magic...
+
+      cheb.setA(1, iterbc*cheb.A(1));
+
+      cheb.orthogonalize({"Maxm", Maxm, "Cutoff", 1e-14});
+      
+    }
+  return cheb;
 }
 
 template <class Tensor>
@@ -446,6 +496,28 @@ memoryprofligate_all_double_mu(MPOt<Tensor> const& H,
     
     if (n % prog_per == 0) { std::cout << n << "\n"; }
   }
+  return mu;
+}
+
+
+template <class Tensor>
+std::vector<std::vector<std::complex<double>> >
+dangler_all_double_mu(MPOt<Tensor> const& H,
+			       MPOt<Tensor> const& j,
+			       std::ofstream& realmu_file,
+			       std::ofstream& imagmu_file,
+			       std::ofstream& chebbd_file,
+			       int N, int Maxm, double cutoff, int prog_per)
+{
+  //mu should be real for physical reasons. Important not to take real
+  //part until we really mean to, though: imag could be clue to
+  //instability.
+  std::vector<std::vector<std::complex<double>>> mu;
+  mu.reserve(N);
+
+  std::cout << "using dangler";
+  dangler_chebyshevs(H, N, Maxm, cutoff, prog_per);
+
   return mu;
 }
 
