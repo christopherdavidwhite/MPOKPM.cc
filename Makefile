@@ -66,8 +66,9 @@ vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
 
 #there's almost certainly a cleaner way to do this
 verification: conductivity
-	rm -r $(VDIR)
+	rm -rf $(VDIR)
 	mkdir -p $(VDIR)
 	./conductivity -L $(vL) -N $(vN) -M $(vM) -f $(vfn)
 	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn) -o $(vfn)
 	evince $(vfn)-plt-trTnerr.pdf &
+	evince $(vfn)-plt-trTnjTnjerr.pdf &
