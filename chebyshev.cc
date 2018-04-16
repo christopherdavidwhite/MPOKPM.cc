@@ -32,10 +32,15 @@ single_mu(MPOt<Tensor> const& Tn,
   auto z = L.cplx();
   return z;
 }
-  
-// slight modification of overlap(psi, H,K, phi) from itensor mpo.cc.
-// overlap is almost but not quite what I want: it doesn't get the
-// prime level quite right, hence messes up the contractions.
+
+/*
+slight modification of overlap(psi, H,K, phi) from itensor mpo.cc.
+overlap is almost but not quite what I want: it doesn't get the
+prime level quite right, hence messes up the contractions.
+
+nominally computes a single coefficient mu = Tr[j Tn j Tm], but when
+applied to an algebra of Chebyshevs gives all the mu
+*/
 template <class Tensor>
 std::complex<double>
 double_mu(MPOt<Tensor> const& Tn,
@@ -51,7 +56,7 @@ double_mu(MPOt<Tensor> const& Tn,
   // from the fact that Miles uses it in overlap, which one wouldn't
   // expect to mess with the prime level of the input)
   auto jp    = j;  
-  auto jpdag = j;
+  auto jpdag = j; //TODO this never actually gets daggered
   
   jp.mapprime(1,2);
   jp.mapprime(0,1);
@@ -62,6 +67,9 @@ double_mu(MPOt<Tensor> const& Tn,
   jpdag.mapprime(0,3);
   jpdag.mapprime(1,0); 
 
+  //TODO start from right (so I'm not dragging a NxN matrix all the
+  //way across in the algebra case)
+  
   //scales as m^2 k^2 d per Miles in mpo.cc. What in my case?
   auto L = jpdag.A(1) * Tndag.A(1) * jp.A(1) * Tm.A(1);
   for(int i = 2; i < N; ++i)
@@ -163,7 +171,7 @@ advance_chebyshevs(MPOt<Tensor>& Tn,
 
 template <class Tensor>
 MPOt<Tensor>
-dangler_chebyshevs(MPOt<Tensor> H, int N, int Maxm, double cutoff, int prog_per)
+dangler_chebyshevs(MPOt<Tensor> H, int N, int Maxm, double cutoff, std::ofstream& chebbd_file, int prog_per)
 {
   auto I = eye(H.sites());
 
@@ -206,6 +214,7 @@ dangler_chebyshevs(MPOt<Tensor> H, int N, int Maxm, double cutoff, int prog_per)
 
       cheb.orthogonalize({"Maxm", Maxm, "Cutoff", 1e-14});
       
+      chebbd_file << n << " " << maxM(cheb) << "\n" << std::flush;
     }
   return cheb;
 }
@@ -284,6 +293,7 @@ check_chebyshevs(MPOt<Tensor> H,
   check(magdiff(sum(Tn2, Unm12) , sum((-1)*H2Unm12, eye(Tn2.sites()))), 0, "Pell equation");
 }
 
+
 //TODO: when I get runtime checks working, this needs some
 template <class Tensor>
 std::vector<std::complex<double>>
@@ -343,6 +353,9 @@ all_double_mu(MPOt<Tensor> const& H,
 	      std::ofstream& realmu_file,
 	      std::ofstream& imagmu_file,
 	      std::ofstream& chebbd_file,
+	      std::ofstream& chsing_file,
+	      std::ofstream& chtrre_file,
+	      std::ofstream& chtrim_file,
 	      int N, int Maxm, double cutoff, int prog_per)
 {
   //mu should be real for physical reasons. Important not to take real
@@ -434,8 +447,6 @@ all_double_mu(MPOt<Tensor> const& H,
       Tnm1 = Tn; //these copy: not great
       Tn = hold; 
     }
-    chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
-    
 #ifdef CHECK
     if(0 == n) { Un   = 2*H; Unm1 = I; }
     else
@@ -445,6 +456,10 @@ all_double_mu(MPOt<Tensor> const& H,
       } 
 #endif
     
+    chebbd_file << n << " " << maxM(Tn) << "\n" << std::flush;
+    std::complex<double> chtr = single_mu(Tn, I);
+    chtrre_file << real(chtr);
+    chtrim_file << real(chtr);
     if (n % prog_per == 0) { std::cout << n << "\n"; }
   }
   return mu;
@@ -458,6 +473,9 @@ memoryprofligate_all_double_mu(MPOt<Tensor> const& H,
 			       std::ofstream& realmu_file,
 			       std::ofstream& imagmu_file,
 			       std::ofstream& chebbd_file,
+			       std::ofstream& chsing_file,
+			       std::ofstream& chtrre_file,
+			       std::ofstream& chtrim_file,
 			       int N, int Maxm, double cutoff, int prog_per)
 {
   //mu should be real for physical reasons. Important not to take real
@@ -494,6 +512,10 @@ memoryprofligate_all_double_mu(MPOt<Tensor> const& H,
     realmu_file << "\n";
     imagmu_file << "\n";
     
+    chebbd_file << n << " " << maxM(Tn[n]) << "\n" << std::flush;
+    std::complex<double> chtr = single_mu(Tn[n], I);
+    chtrre_file << real(chtr);
+    chtrim_file << real(chtr);
     if (n % prog_per == 0) { std::cout << n << "\n"; }
   }
   return mu;
@@ -503,11 +525,14 @@ memoryprofligate_all_double_mu(MPOt<Tensor> const& H,
 template <class Tensor>
 std::vector<std::vector<std::complex<double>> >
 dangler_all_double_mu(MPOt<Tensor> const& H,
-			       MPOt<Tensor> const& j,
-			       std::ofstream& realmu_file,
-			       std::ofstream& imagmu_file,
-			       std::ofstream& chebbd_file,
-			       int N, int Maxm, double cutoff, int prog_per)
+		      MPOt<Tensor> const& j,
+		      std::ofstream& realmu_file,
+		      std::ofstream& imagmu_file,
+		      std::ofstream& chebbd_file,
+		      std::ofstream& chsing_file,
+		      std::ofstream& chtrre_file,
+		      std::ofstream& chtrim_file,
+		      int N, int Maxm, double cutoff, int prog_per)
 {
   //mu should be real for physical reasons. Important not to take real
   //part until we really mean to, though: imag could be clue to
@@ -515,9 +540,14 @@ dangler_all_double_mu(MPOt<Tensor> const& H,
   std::vector<std::vector<std::complex<double>>> mu;
   mu.reserve(N);
 
-  std::cout << "using dangler";
-  dangler_chebyshevs(H, N, Maxm, cutoff, prog_per);
+  std::cout << "using dangler\n";
+  MPOt<Tensor> cheb = dangler_chebyshevs(H, N, Maxm, cutoff, chebbd_file, prog_per);
 
+  MPOt<Tensor> I = eye(H.sites());
+  //Tensor chtr = single_mu(cheb, I);
+  //TODO chtrre_file << real(chtr);
+  //TODO chtrim_file << real(chtr);
+  //TODO pull out the mu
   return mu;
 }
 

@@ -120,23 +120,24 @@ int main(int argc, char **argv)
   //==============================================================
   //set some variables, mostly files/filenames
 
+
   std::string realmu_filename = filename + ".re";
   std::string imagmu_filename = filename + ".im";
   std::string disout_filename = filename + ".dis";
   std::string timing_filename = filename + ".tim";
   std::string chebbd_filename = filename + ".chM"; //record bond dimensions of Chebyshev polynomials
   
-  std::ofstream realmu_file(realmu_filename);
-  if (!realmu_file) {error("Could not open file for writing");}
-  std::ofstream imagmu_file(imagmu_filename);
-  if (!imagmu_file) {error("Could not open file for writing");}
-  std::ofstream disout_file(disout_filename);
-  if (!disout_file) {error("Could not open file for writing");}
-  std::ofstream timing_file(timing_filename);
-  if (!timing_file) {error("Could not open file for writing");}
-  std::ofstream chebbd_file(chebbd_filename);
-  if (!chebbd_file) {error("Could not open file for writing");}
-  //todo more informative error messages
+  // macro OPENE declares second arg and initializes with filehandle to
+  // firstarg. Defined in util.cc
+
+  OPENE(filename + ".re",  realmu_file);
+  OPENE(filename + ".im",  imagmu_file);
+  OPENE(filename + ".dis", disout_file);
+  OPENE(filename + ".tim", timing_file);
+  OPENE(filename + ".chs", chsing_file);
+  OPENE(filename + ".chM", chebbd_file);
+  OPENE(filename + ".chtrre", chtrre_file);
+  OPENE(filename + ".chtrim", chtrim_file);
 
   //If we need more than 10 digits of precision (say), we're in deep
   //trouble anyway
@@ -195,12 +196,12 @@ int main(int argc, char **argv)
   auto j = IQMPO(j_ampo);
 
   auto t0 = std::chrono::high_resolution_clock::now();
-  std::cout << "dangler?";
-  auto mu = dangler_all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, cutoff, 1);
+  std::cout << "dangler?\n";
+  auto mu = dangler_all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, chsing_file, chtrre_file, chtrim_file, N, Maxm, cutoff, 1);
   if(profligate){
-    auto mu = memoryprofligate_all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, cutoff, 1);
+    auto mu = memoryprofligate_all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file,chsing_file, chtrre_file, chtrim_file,  N, Maxm, cutoff, 1);
   } else {
-    auto mu = all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, N, Maxm, cutoff, 1);
+    auto mu = all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, chsing_file, chtrre_file, chtrim_file,  N, Maxm, cutoff, 1);
   }
   
   auto t1 = std::chrono::high_resolution_clock::now();
