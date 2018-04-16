@@ -53,10 +53,17 @@ TEST_F(ConductivityTest, RandomParamagnetMu) {
 
   auto j = IQMPO(j_ampo);
   auto I = eye(sites);
-    
-  std::ofstream realmu_file("conductivity.test.re");
-  std::ofstream imagmu_file("conductivity.test.im");
-  std::ofstream chebbd_file("conductivity.test.chB");
+
+  std::string filename = "conductivity.test";
+  double cutoff=1e-14;
+  OPENE(filename + ".re",  realmu_file);
+  OPENE(filename + ".im",  imagmu_file);
+  OPENE(filename + ".dis", disout_file);
+  OPENE(filename + ".tim", timing_file);
+  OPENE(filename + ".chs", chsing_file);
+  OPENE(filename + ".chM", chebbd_file);
+  OPENE(filename + ".chtrre", chtrre_file);
+  OPENE(filename + ".chtrim", chtrim_file);
   
   int Maxm   = 1000;
   int N      = 4;
