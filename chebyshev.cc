@@ -545,21 +545,45 @@ dangler_all_double_mu(MPOt<Tensor> const& H,
 		      std::ofstream& chtrim_file,
 		      int N, int Maxm, double cutoff, int prog_per)
 {
-  //mu should be real for physical reasons. Important not to take real
-  //part until we really mean to, though: imag could be clue to
-  //instability.
-  std::vector<std::vector<std::complex<double>>> mu;
-  mu.reserve(N);
+  std::vector<std::vector<std::complex<double>>> vecmu;
+  vecmu.reserve(N);
 
+  //initialize mu to be 0
+  for (int i = 0; i < N; i++) {
+    vecmu.push_back(std::vector<std::complex<double>>(N,0));
+  }
+  
   std::cout << "using dangler\n";
   MPOt<Tensor> cheb = dangler_chebyshevs(H, N, Maxm, cutoff, chebbd_file, prog_per);
 
   MPOt<Tensor> I = eye(H.sites());
-  //Tensor chtr = single_mu(cheb, I);
-  //TODO chtrre_file << real(chtr);
-  //TODO chtrim_file << real(chtr);
-  //TODO pull out the mu
-  return mu;
+  Tensor chtr = single_mu(cheb, I);
+
+  IQIndex i1;
+  IQIndex i2;
+
+  //print the single-mu traces
+  i1 = chtr.inds()[0];
+  for(int n = 1; n <= N; n++){
+    chtrre_file << real(chtr.cplx(i1(n))) << " ";  
+    chtrim_file << imag(chtr.cplx(i1(n))) << " ";
+  }
+
+  auto mu = double_mu(cheb, cheb, j);
+  i1 = mu.inds()[0];
+  i2 = mu.inds()[1];
+  for(int n = 1; n <= N; n++){
+    for(int m = 1; m <= N; m++){
+      vecmu[n][m] = mu.cplx(i1(n),i2(m));
+      realmu_file << real(mu.cplx(i1(n), i2(m))) << " ";  
+      imagmu_file << imag(mu.cplx(i1(n), i2(m))) << " ";  
+    }
+    realmu_file << "\n";
+    imagmu_file << "\n";
+  }
+
+  return vecmu;
+  
 }
 
 #endif //#ifndef MPOKPM_CHEBYSHEV

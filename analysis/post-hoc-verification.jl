@@ -132,9 +132,11 @@ function main(args)
         d,v = H |> full |> eig
 
         trTned = zeros(N)
-        for n = 1:N-1
-            trTned[n] = sum(cos.(n*acos.(d)))
+        for n = 1:N
+            trTned[n] = sum(cos.((n-1)*acos.(d)))
         end
+        @show trTned
+        @show trTncc
         @show trTned - trTncc
         semilogy(abs.(trTned - trTncc), ".")
         xlabel("n", size=20)
@@ -145,11 +147,6 @@ function main(args)
 
         #check conductivity coeffs
         μcc = readdlm("$ifn.re")
-        for n in 1:N
-            for m in n+1:N
-                μcc[m,n] = μcc[n,m]
-            end
-        end
         j = imag(sum([2*(Y[l]*X[l+1] - X[l]*Y[l+1]) for l in 1:L-1]) |> full)
         μed = -exact_μ(Hfull,j,N) #minus because I took imag part of j
 
@@ -160,6 +157,8 @@ function main(args)
         cla()
         clf()
         
+        #@show μed
+        #@show μcc
         @show diff |> abs |> maximum 
     end
 end
