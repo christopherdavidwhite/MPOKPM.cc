@@ -38,6 +38,7 @@ int main(int argc, char **argv)
   uint s = 0;
   double hz = 1.0;
   double cutoff = 1e-14;
+  double Q = 1;
   bool profligate = false; //use memory-profligate strategy? 
   std::string filename = "/tmp/conductivity.txt";
 
@@ -59,7 +60,7 @@ int main(int argc, char **argv)
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      char c = getopt_long (argc, argv, "L:M:N:h:f:e:p", long_options, &option_index);
+      char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:p", long_options, &option_index);
 
       /* Detect the end of the options. */
       if (c == -1)
@@ -107,6 +108,11 @@ int main(int argc, char **argv)
           break;
 
 	  //todo disorder width
+	  
+	case 'Q':
+	  Q = std::stod(optarg);
+	  std::cout << "scale" << Q << "\n";
+	  break;
 	  
         case '?':
           /* getopt_long already printed an error message. */
@@ -176,7 +182,7 @@ int main(int argc, char **argv)
   IQMPO H;
   double opnorm_bound;
   std::tie(H, hzs, opnorm_bound) = rfheis(sites, hz, e);
-  H *= 1.0/opnorm_bound;
+  H *= Q/opnorm_bound;
 
   //write the disorder to file
   for(int b = 0; b < L; ++b) { disout_file << hzs[b] << " "; }
