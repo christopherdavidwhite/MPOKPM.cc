@@ -574,7 +574,7 @@ dangler_all_double_mu(MPOt<Tensor> const& H,
   i2 = mu.inds()[1];
   for(int n = 1; n <= N; n++){
     for(int m = 1; m <= N; m++){
-      vecmu[n][m] = mu.cplx(i1(n),i2(m));
+      vecmu[n-1][m-1] = mu.cplx(i1(n),i2(m));
       realmu_file << real(mu.cplx(i1(n), i2(m))) << " ";  
       imagmu_file << imag(mu.cplx(i1(n), i2(m))) << " ";  
     }
