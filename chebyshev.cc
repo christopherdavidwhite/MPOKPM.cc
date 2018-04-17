@@ -27,8 +27,8 @@ single_mu(MPOt<Tensor> const& Tn,
   int N = op.N();
   assert(N == Tn.N());
     
-  auto L = Tn.A(1) * op.A(1);
-  for(int i=2; i <= N; ++i) { L = L * Tn.A(i) * op.A(i); }
+  auto L = Tn.A(N) * op.A(N);
+  for(int i=N-1; i >= 1; --i) { L = L * Tn.A(i) * op.A(i); }
   return L;
 }
 
@@ -70,14 +70,12 @@ double_mu(MPOt<Tensor> const& Tn,
   //way across in the algebra case)
   
   //scales as m^2 k^2 d per Miles in mpo.cc. What in my case?
-  auto L = jpdag.A(1) * Tndag.A(1) * jp.A(1) * Tm.A(1);
-  for(int i = 2; i < N; ++i)
+  auto L = jpdag.A(N) * Tndag.A(N) * jp.A(N) * Tm.A(N);
+  for(int i = N-1; i >= 1; --i)
     {
       //scales as m^3 k^2 d + m^2 k^3 d^2. What in my case?
       L = L * jpdag.A(i) * Tndag.A(i) * jp.A(i) * Tm.A(i);
     }
-  //scales as m^2 k^2 d
-  L = L* jpdag.A(N) * Tndag.A(N) * jp.A(N) * Tm.A(N);
   //PrintData(L);
   return L;
 }
