@@ -39,7 +39,8 @@ int main(int argc, char **argv)
   double hz = 1.0;
   double cutoff = 1e-14;
   double Q = 1;
-  bool profligate = false; //use memory-profligate strategy? 
+  bool profligate = false; //use memory-profligate strategy?
+  bool dangler = false;
   std::string filename = "/tmp/conductivity.txt";
 
 
@@ -60,7 +61,7 @@ int main(int argc, char **argv)
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:p", long_options, &option_index);
+      char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:pd", long_options, &option_index);
 
       /* Detect the end of the options. */
       if (c == -1)
@@ -73,8 +74,13 @@ int main(int argc, char **argv)
           if (long_options[option_index].flag != 0)
             break;
 
+	  //alternate strategies
 	case 'p':
 	  profligate = true;
+	  break;
+	  
+	case 'd':
+	  dangler = true;
 	  break;
 	  
         case 'L':
@@ -202,8 +208,11 @@ int main(int argc, char **argv)
   auto j = IQMPO(j_ampo);
 
   auto t0 = std::chrono::high_resolution_clock::now();
-  auto mu = dangler_all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, chsing_file, chtrre_file, chtrim_file, N, Maxm, cutoff, 1);
-  
+  if (dangler){
+    auto mu = dangler_all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, chsing_file, chtrre_file, chtrim_file, N, Maxm, cutoff, 1);
+  } else {
+    auto mu = all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, chsing_file, chtrre_file, chtrim_file, N, Maxm, cutoff, 1);
+  }
   auto t1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> computation_time = t1 - t0;
   timing_file << computation_time.count() << "\n";
