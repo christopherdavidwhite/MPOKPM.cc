@@ -208,7 +208,7 @@ dangler_chebyshevs(MPOt<Tensor> H, int N, int Maxm, double cutoff, std::ofstream
 
       cheb.setA(1, iterbc*cheb.A(1));
 
-      cheb.orthogonalize({"Maxm", Maxm, "Cutoff", 1e-14});
+      cheb.orthogonalize({"Maxm", Maxm, "Cutoff", cutoff});
       
       chebbd_file << n << " " << maxM(cheb) << "\n" << std::flush;
     }
@@ -469,7 +469,7 @@ all_double_mu(MPOt<Tensor> const& H,
     std::complex<double> chtr = single_mu(Tn, I).cplx();
     chtrre_file << real(chtr) << " ";
     chtrim_file << real(chtr) << " " ;
-    if (n % prog_per == 0) { std::cout << n << "\n"; }
+    if (n % prog_per == 0) { std::cout << n << " " << maxM(Tn) << "\n"; }
   }
   return mu;
 }
