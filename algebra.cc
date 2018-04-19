@@ -30,15 +30,14 @@ oplus(MPOt<Tensor> A, MPOt<Tensor> B)
   return out;
 }
 
-template<class MPOType>
+template<class Tensor>
 void 
-nmultMPAlgebra(MPOType const& Aorig, 
-         MPOType const& Borig, 
-         MPOType& res,
-         Args args)
+nmultMPAlgebra(MPOt<Tensor> const& Aorig, 
+	       MPOt<Tensor>const& Borig,
+	       Tensor const& lbc, //left boundary condition
+	       MPOt<Tensor>& res,
+	       Args args)
 {
-  using Tensor = typename MPOType::TensorT;
-
   if(!args.defined("Cutoff")) args.add("Cutoff",1E-14);
 
   if(Aorig.N() != Borig.N()) Error("nmultMPO(MPOType): Mismatched N");
@@ -47,7 +46,7 @@ nmultMPAlgebra(MPOType const& Aorig,
   auto A = Aorig;
   A.position(1);
 
-  MPOType B;
+  MPOt<Tensor> B;
   if(&Borig == &Aorig) { B = A; }
   else                 { B = Borig; B.position(1); }
 
@@ -57,11 +56,6 @@ nmultMPAlgebra(MPOType const& Aorig,
   res.primelinks(0,4);
   res.mapprime(1,2,Site);
 
-  // need to give res.A(1) B's dangler index as well as A's so that
-  // denmatDecomp (later) deduces the indices correctly
-  auto Bd = findtype(B.A(1), Dangler);
-  auto S = setElt(Bd(1));
-  res.setA(1, S*res.A(1));
       
   Tensor clust,nfork;
   for(int i = N; i > 1; --i)
@@ -78,8 +72,24 @@ nmultMPAlgebra(MPOType const& Aorig,
       res.Anc(i-1) = Tensor(mid,dag(res.sites()(i-1)),prime(res.sites()(i-1),2),rightLinkInd(res,i-1));
     }
 
-  nfork = clust * A.A(1) * B.A(1);
+  nfork = lbc * clust * A.A(1) * B.A(1);
 
+  // res.A(1) needs
+  //
+  //  - common physical indices of A.A(1), B.A(1). Get these from the
+  //    siteset.
+  //
+  //  - left dangler index of lbc (*not* either of the dangler indices
+  //    of A,B). This is the dangler of nfork.
+  // 
+  //  - some kind of mid link index. Not entirely sure what to do
+  //    here, but I'll copy Miles above.
+  
+  auto mid = commonIndex(res.A(1),nfork,Link);
+  mid.dag();
+  auto output_dangler = findtype(nfork, Dangler);
+  res.Anc(1) = Tensor(output_dangler, mid,dag(res.sites()(1)),prime(res.sites()(1),2),rightLinkInd(res,1));
+  
   res.svdBond(1,nfork,Fromleft);
   res.noprimelink();
   res.mapprime(2,1,Site);

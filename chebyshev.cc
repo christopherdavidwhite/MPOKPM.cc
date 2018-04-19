@@ -203,10 +203,8 @@ dangler_chebyshevs(MPOt<Tensor> H, int N, int Maxm, double cutoff, std::ofstream
       iterbc.set(k(n+1), id(n),   jd(2), 2.0);  //2*H*Tn
       iterbc.set(k(n+1), id(n-1), jd(1), -1.0); // - Tn-1
       
-      nmultMPAlgebra(cheb, iter, store, {"Cutoff", 1e-14}); 
+      nmultMPAlgebra(cheb, iter, iterbc, store, {"Cutoff", 1e-14}); 
       cheb = store; //copies! Bad! Can go do rvalue magic...
-
-      cheb.setA(1, iterbc*cheb.A(1));
 
       cheb.orthogonalize({"Maxm", Maxm, "Cutoff", cutoff});
       
