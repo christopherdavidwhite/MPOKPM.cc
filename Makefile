@@ -70,5 +70,3 @@ verification: conductivity
 	mkdir -p $(VDIR)
 	./conductivity -L $(vL) -N $(vN) -M $(vM) -f $(vfn) -d
 	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn) -o $(vfn)
-	evince $(vfn)-plt-trTnerr.pdf &
-	evince $(vfn)-plt-trTnjTnjerr.pdf &

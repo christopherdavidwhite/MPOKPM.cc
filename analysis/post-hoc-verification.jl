@@ -132,7 +132,7 @@ function main(args)
 
         trTned = zeros(N)
         for n = 1:N
-            trTned[n] = sum(cos.((n)*acos.(d)))
+            trTned[n] = sum(cos.((n-1)*acos.(d)))
         end
         @show trTned
         @show trTncc
@@ -150,7 +150,7 @@ function main(args)
         μed = -exact_μ(Hfull,j,N) #minus because I took imag part of j
 
         diff = 2.0^(-2L)*μed - μcc
-        vmax = diff |> abs |> maximum
+        vmax = abs.(diff) |> maximum
         pcolor(diff, cmap="seismic", vmin=-vmax, vmax=vmax)
         savefig("$ofn-plt-trTnjTmjerr.pdf", bbox_inches="tight")
         cla()
@@ -158,7 +158,7 @@ function main(args)
         
         #@show μed
         #@show μcc
-        @show diff |> abs |> maximum 
+        @show abs.(diff) |> maximum 
     end
 end
 main(ARGS)
