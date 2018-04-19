@@ -74,18 +74,17 @@ nmultMPAlgebra(MPOt<Tensor> const& Aorig,
   for(int i = N; i > 1; --i)
     {
       if(i == N) { clust = A.A(i) * B.A(i); }
-      else       { clust = nfork * A.A(i) * B.A(i); }
+      else       { clust = A.A(i) * B.A(i) * nfork; }
 
-      nfork = Tensor(linkInd(A,i-1),linkInd(B,i-1),linkInd(res,i-1));
+      nfork = Tensor(leftLinkInd(A,i),leftLinkInd(B,i),leftLinkInd(res,i).dag());
 
-      denmatDecomp(clust,nfork,res.Anc(i) ,Fromright,{"Cutoff", 1e-14});
-
-      auto mid = commonIndex(res.A(i),nfork,Link);
-      mid.dag();
-      res.Anc(i-1) = Tensor(mid,dag(res.sites()(i-1)),prime(res.sites()(i-1),2),rightLinkInd(res,i-1));
+      Tensor C;
+      denmatDecomp(clust,nfork,C ,Fromright,{"Cutoff", 1e-14});
+      res.setA(i, C);
     }
-
-  nfork = lbc * clust * A.A(1) * B.A(1);
+  clust = lbc * A.A(1)*B.A(1)*nfork;
+  res.setA(1, clust);
+  Tensor theta = clust * res.A(2);
 
   // res.A(1) needs
   //
@@ -93,17 +92,13 @@ nmultMPAlgebra(MPOt<Tensor> const& Aorig,
   //    siteset.
   //
   //  - left dangler index of lbc (*not* either of the dangler indices
-  //    of A,B). This is the dangler of nfork.
-  // 
-  //  - some kind of mid link index. Not entirely sure what to do
-  //    here, but I'll copy Miles above.
+  //    of A,B). This is the dangler of clust.
+  //
+  //  - right link index for site 1 (bond 1)
+  //
+  // (This is so svdBond will group indices in the right way.)
   
-  auto mid = commonIndex(res.A(1),nfork,Link);
-  mid.dag();
-  auto output_dangler = findtype(nfork, Dangler);
-  res.Anc(1) = Tensor(output_dangler, mid,dag(res.sites()(1)),prime(res.sites()(1),2),rightLinkInd(res,1));
-  
-  res.svdBond(1,nfork,Fromleft);
+  res.svdBond(1,theta,Fromleft);
   res.noprimelink();
   res.mapprime(2,1,Site);
   res.orthogonalize(args);
