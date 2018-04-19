@@ -133,7 +133,7 @@ function main(args)
 
         trTned = zeros(N)
         for n = 1:N
-            trTned[n] = sum(cos.((n-1)*acos.(d)))
+            trTned[n] = sum(cos.((n)*acos.(d)))
         end
         @show trTned
         @show trTncc

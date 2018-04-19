@@ -48,15 +48,8 @@ nmultMPAlgebra(MPOType const& Aorig,
   A.position(1);
 
   MPOType B;
-  if(&Borig == &Aorig)
-    {
-      B = A;
-    }
-  else
-    {
-      B = Borig;
-      B.position(1);
-    }
+  if(&Borig == &Aorig) { B = A; }
+  else                 { B = Borig; B.position(1); }
 
   B.primeall();
 
@@ -71,36 +64,27 @@ nmultMPAlgebra(MPOType const& Aorig,
   res.setA(1, S*res.A(1));
       
   Tensor clust,nfork;
-  for(int i = 1; i < N; ++i)
+  for(int i = N; i > 1; --i)
     {
-      if(i == 1) 
-	{ 
-	  clust = A.A(i) * B.A(i); 
-	}
-      else       
-	{ 
-	  clust = nfork * A.A(i) * B.A(i); 
-	}
+      if(i == N) { clust = A.A(i) * B.A(i); }
+      else       { clust = nfork * A.A(i) * B.A(i); }
 
-      if(i == N-1) break;
+      nfork = Tensor(linkInd(A,i-1),linkInd(B,i-1),linkInd(res,i-1));
 
-      nfork = Tensor(linkInd(A,i),linkInd(B,i),linkInd(res,i));
-
-      denmatDecomp(clust,res.Anc(i),nfork,Fromleft,args);
+      denmatDecomp(clust,nfork,res.Anc(i) ,Fromright,args);
 
       auto mid = commonIndex(res.A(i),nfork,Link);
       mid.dag();
-      res.Anc(i+1) = Tensor(mid,dag(res.sites()(i+1)),prime(res.sites()(i+1),2),rightLinkInd(res,i+1));
+      res.Anc(i-1) = Tensor(mid,dag(res.sites()(i-1)),prime(res.sites()(i-1),2),rightLinkInd(res,i-1));
     }
 
-  nfork = clust * A.A(N) * B.A(N);
+  nfork = clust * A.A(1) * B.A(1);
 
-  res.svdBond(N-1,nfork,Fromright);
+  res.svdBond(1,nfork,Fromleft);
   res.noprimelink();
   res.mapprime(2,1,Site);
   res.orthogonalize();
 
 }//void nmultMPO(const MPOType& Aorig, const IQMPO& Borig, IQMPO& res,Real cut, int maxm)
-
 
 #endif //#ifndef MPOKPM_ALGEBRA
