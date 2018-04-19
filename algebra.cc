@@ -30,6 +30,19 @@ oplus(MPOt<Tensor> A, MPOt<Tensor> B)
   return out;
 }
 
+
+/* This guy behaves differently from Miles's nmultMPO in a
+   user-relevant way in how it does truncation. In particular:
+ 
+   - the denmatDecomp uses a hard-coded 1e-14 cutoff and no maxM
+   - the Args args goes to the orthogonalize at the end.
+
+   I really don't understand why Miles was doing things the way he
+   did. Maybe he wanted something like zip-up---in this case, sure,
+   apply one Args to the denmatDecomp, but you want to pass in another
+   Args to orthogonalize. Don't make the user do that.
+
+*/
 template<class Tensor>
 void 
 nmultMPAlgebra(MPOt<Tensor> const& Aorig, 
@@ -65,7 +78,7 @@ nmultMPAlgebra(MPOt<Tensor> const& Aorig,
 
       nfork = Tensor(linkInd(A,i-1),linkInd(B,i-1),linkInd(res,i-1));
 
-      denmatDecomp(clust,nfork,res.Anc(i) ,Fromright,args);
+      denmatDecomp(clust,nfork,res.Anc(i) ,Fromright,{"Cutoff", 1e-14});
 
       auto mid = commonIndex(res.A(i),nfork,Link);
       mid.dag();
@@ -93,7 +106,7 @@ nmultMPAlgebra(MPOt<Tensor> const& Aorig,
   res.svdBond(1,nfork,Fromleft);
   res.noprimelink();
   res.mapprime(2,1,Site);
-  res.orthogonalize();
+  res.orthogonalize(args);
 
 }//void nmultMPO(const MPOType& Aorig, const IQMPO& Borig, IQMPO& res,Real cut, int maxm)
 
