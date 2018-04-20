@@ -47,6 +47,7 @@ XX(SiteSet sites, double hz, std::default_random_engine e)
   //++b or b++?
   for(int b = 1; b < L; ++b)
     {
+      fields.push_back(0.0);
       H_ampo += 0.5,"S+",b,"S-",b+1;
       H_ampo += 0.5,"S-",b,"S+",b+1;
     }
