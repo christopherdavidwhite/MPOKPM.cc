@@ -42,6 +42,7 @@ int main(int argc, char **argv)
   bool profligate = false; //use memory-profligate strategy?
   bool dangler = false;
   std::string filename = "/tmp/conductivity.txt";
+  std::string model = "rfheis";
 
 
   //==============================================================
@@ -61,7 +62,7 @@ int main(int argc, char **argv)
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:pd", long_options, &option_index);
+      char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:m:pd", long_options, &option_index);
 
       /* Detect the end of the options. */
       if (c == -1)
@@ -112,6 +113,11 @@ int main(int argc, char **argv)
 	  filename = optarg;
 	  std::cout <<  filename << "\n";
           break;
+
+	case 'm':
+	  model = optarg;
+	  std::cout << model << "\n";
+	  break;
 
 	  //todo disorder width
 	  
@@ -187,7 +193,12 @@ int main(int argc, char **argv)
   std::vector<double> hzs;
   IQMPO H;
   double opnorm_bound;
-  std::tie(H, hzs, opnorm_bound) = rfheis(sites, hz, e);
+  //should probably be case/switch
+  if     (model == "rfheis") { std::tie(H, hzs, opnorm_bound) = rfheis(sites, hz, e); }
+  else if(model == "xx")     { std::tie(H, hzs, opnorm_bound) = XX(sites, hz, e); }
+  else if(model == "rpara")  { std::tie(H, hzs, opnorm_bound) = rpara(sites, hz, e); }
+  else {std::cerr << "unknown model " << model ; exit(-1);}
+  
   H *= Q/opnorm_bound;
 
   //write the disorder to file

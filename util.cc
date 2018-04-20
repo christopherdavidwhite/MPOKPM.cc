@@ -36,10 +36,32 @@ operatornorm(MPOt<Tensor> const& B)
   //TODO
 }
 
+std::tuple<IQMPO,std::vector<double>, double>
+XX(SiteSet sites, double hz, std::default_random_engine e)
+{
+  //cf https://isocpp.org/files/papers/n3551.pdf
+  auto L = sites.N();
+  std::vector<double> fields; //need for return...
+
+  auto H_ampo = AutoMPO(sites);
+  //++b or b++?
+  for(int b = 1; b < L; ++b)
+    {
+      H_ampo += 0.5,"S+",b,"S-",b+1;
+      H_ampo += 0.5,"S-",b,"S+",b+1;
+    }
+
+  auto H = IQMPO(H_ampo);
+  
+  //operator norm is bounded by sum of operator norms of terms
+  double opnorm_bound = (L-1);
+  return std::make_tuple(H, fields, opnorm_bound);
+}
+
 //construct our random-field Heisenberg Hamiltonian
 //returns a tuple of IQMPO, fields, and upper bound on operator norm
 std::tuple<IQMPO,std::vector<double>, double>
-  rfheis(SiteSet sites, double hz, std::default_random_engine e)
+rfheis(SiteSet sites, double hz, std::default_random_engine e)
 {
   //cf https://isocpp.org/files/papers/n3551.pdf
   std::uniform_real_distribution<double> d(0.0,1.0);
