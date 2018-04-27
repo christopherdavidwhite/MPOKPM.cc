@@ -8,7 +8,8 @@
 #define MPOKPM_UTIL
 using namespace itensor;
 
-#define OPENE(fn, f) std::ofstream f(fn); if (!f) {error("Could not open file for writing");}
+#define OPENE(fn, f) std::ofstream f(fn); if (!f) {error("Could not open file for writing");} f.precision(15);
+
 MPOt<IQTensor>
 eye(SiteSet sites)
 {
