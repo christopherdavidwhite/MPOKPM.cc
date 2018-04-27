@@ -146,4 +146,49 @@ entanglement_spectrum(MPOt<Tensor> psi, int b)
 
 
 
+void write_singleKPM(IQTensor chtr,
+		     int N,
+		     std::ofstream& chtrre_file,
+		     std::ofstream& chtrim_file)
+  
+{
+  IQIndex i1;
+
+  //todo assert(1 == chtr.rank);
+  //print the single-mu traces
+  i1 = chtr.inds()[0];
+  for(int n = 1; n <= N; n++){
+    chtrre_file << real(chtr.cplx(i1(n))) << " ";  
+    chtrim_file << imag(chtr.cplx(i1(n))) << " ";
+  }
+}
+
+std::vector<std::vector<std::complex<double>>>
+write_doubleKPM(IQTensor mu,
+		int N,
+		std::ofstream& realmu_file,
+		std::ofstream& imagmu_file )
+{ 
+  //todo assert(2 == mu.rank);
+  
+  IQIndex i1;
+  IQIndex i2;
+  std::vector<std::vector<std::complex<double>>> vecmu;
+  vecmu.reserve(N);
+  //initialize mu to be 0
+  for (int i = 0; i < N; i++) { vecmu.push_back(std::vector<std::complex<double>>(N,0)); }
+  
+  i1 = mu.inds()[0];
+  i2 = mu.inds()[1];
+  for(int n = 1; n <= N; n++){
+    for(int m = 1; m <= N; m++){
+      vecmu[n-1][m-1] = mu.cplx(i1(n),i2(m));
+      realmu_file << real(mu.cplx(i1(n), i2(m))) << " ";  
+      imagmu_file << imag(mu.cplx(i1(n), i2(m))) << " ";  
+    }
+    realmu_file << "\n";
+    imagmu_file << "\n";
+  }
+  return vecmu;
+}
 #endif //#ifndef MPOKPM_UTIL
