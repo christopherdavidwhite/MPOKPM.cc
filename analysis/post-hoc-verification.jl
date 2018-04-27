@@ -87,22 +87,23 @@ function main(args)
 
     cla()
     clf()
+
     
-    f = open("$ifn.chs")
-    for (n, ln) in enumerate(eachline(f))
-        if n % 4 == 1
-            semilogy([parse(Float64, s) for s in split(ln)], ".-", label="n=$n")
-        end
-    end
-    close(f)
-    legend()
-    ylabel("Singular value \$s_j\$", size=20)
-    xlabel("Index \$j\$", size=20)
-    xlim(0,520)
+    # f = open("$ifn.chs")
+    # for (n, ln) in enumerate(eachline(f))
+    #     if n % 4 == 1
+    #         semilogy([parse(Float64, s) for s in split(ln)], ".-", label="n=$n")
+    #     end
+    # end
+    # close(f)
+    # legend()
+    # ylabel("Singular value \$s_j\$", size=20)
+    # xlabel("Index \$j\$", size=20)
+    # xlim(0,520)
     
-    savefig("$ofn-plt-chs.pdf", bbox_inches="tight")
-    cla()
-    clf()
+    # savefig("$ofn-plt-chs.pdf", bbox_inches="tight")
+    # cla()
+    # clf()
 
     hzf = open("$ifn.dis")
     hz = [parse(Float64, s) for s in split(readline(hzf))]
