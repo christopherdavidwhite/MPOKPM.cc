@@ -572,7 +572,7 @@ dangler_all_double_mu(MPOt<Tensor> const& H,
     //performance information
     auto t1 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> computation_time = t1 - t0;
-    timing_file << N_sofar << " " << computation_time.count() << "\n" << std::flush();
+    timing_file << N_sofar << " " << computation_time.count() << "\n" << std::flush;
     
     OPENE(filename + "." + std::to_string(N_sofar) + ".re",  realmu_file);
     OPENE(filename + "." + std::to_string(N_sofar) + ".im",  imagmu_file);
@@ -596,7 +596,7 @@ dangler_all_double_mu(MPOt<Tensor> const& H,
     //performance information
     auto t1 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> computation_time = t1 - t0;
-    timing_file << N_sofar << " " << computation_time.count() << "\n" << std::flush();
+    timing_file << N_sofar << " " << computation_time.count() << "\n" << std::flush;
 
     OPENE(filename + ".re",  realmu_file);
     OPENE(filename + ".im",  imagmu_file);
