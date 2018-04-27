@@ -1,7 +1,12 @@
 #include "itensor/mps/autompo.h"
 #include "itensor/mps/sites/spinhalf.h"
+
+#include <chrono>
+#include <string>
+
 #include "util.cc"
 #include "algebra.cc"
+#include "globals.h"
 
 #ifndef MPOKPM_CHEBYSHEV
 #define MPOKPM_CHEBYSHEV
@@ -167,24 +172,21 @@ advance_chebyshevs(MPOt<Tensor>& Tn,
 
 template <class Tensor>
 MPOt<Tensor>
-dangler_chebyshevs(MPOt<Tensor> H, int N, int Maxm, double cutoff, std::ofstream& chebbd_file, int prog_per)
+advance_dangler_chebyshevs(MPOt<Tensor> cheb, int n0, MPOt<Tensor> H,
+			   int N, int Maxm, double cutoff,
+			   std::ofstream& chebbd_file,
+			   int prog_per)
 {
   auto I = eye(H.sites());
 
-  MPOt<Tensor> cheb = oplus(I,H);
   MPOt<Tensor> iter = oplus(I,H);
 
-    
   cheb.orthogonalize();
   iter.orthogonalize();
 
-  //normalization
-  int L = H.N();
-  cheb = cheb*pow(2.0, -L/2);
-
   //n is the number of Chebyshevs we've already computed.
   //note that this n is notionally a 1-index: "T1" is identity
-  for(int n = 2; n < N; n++)
+  for(int n = n0; n < n0 + N; n++)
     {
       if (n % prog_per == 0) { std::cout << n << " " << maxM(cheb) << "\n"; }
       MPOt<Tensor> store;
@@ -531,53 +533,82 @@ template <class Tensor>
 std::vector<std::vector<std::complex<double>> >
 dangler_all_double_mu(MPOt<Tensor> const& H,
 		      MPOt<Tensor> const& j,
-		      std::ofstream& realmu_file,
-		      std::ofstream& imagmu_file,
-		      std::ofstream& chebbd_file,
-		      std::ofstream& chsing_file,
-		      std::ofstream& chtrre_file,
-		      std::ofstream& chtrim_file,
+		      std::string const& filename,
 		      int N, int Maxm, double cutoff, int prog_per)
 {
+
+  
   std::vector<std::vector<std::complex<double>>> vecmu;
-  vecmu.reserve(N);
-
-  //initialize mu to be 0
-  for (int i = 0; i < N; i++) {
-    vecmu.push_back(std::vector<std::complex<double>>(N,0));
-  }
   
+  // macro OPENE declares second arg and initializes with filehandle to
+  // firstarg. Defined in util.cc
+  OPENE(filename + ".tim", timing_file);
+  OPENE(filename + ".chM", chebbd_file);
+
   std::cout << "using dangler\n";
-  MPOt<Tensor> cheb = dangler_chebyshevs(H, N, Maxm, cutoff, chebbd_file, prog_per);
 
-  MPOt<Tensor> I = eye(H.sites());
-  Tensor chtr = single_mu(cheb, I);
 
-  IQIndex i1;
-  IQIndex i2;
-
-  //print the single-mu traces
-  i1 = chtr.inds()[0];
-  for(int n = 1; n <= N; n++){
-    chtrre_file << real(chtr.cplx(i1(n))) << " ";  
-    chtrim_file << imag(chtr.cplx(i1(n))) << " ";
-  }
-
-  auto mu = double_mu(cheb, cheb, j);
-  i1 = mu.inds()[0];
-  i2 = mu.inds()[1];
-  for(int n = 1; n <= N; n++){
-    for(int m = 1; m <= N; m++){
-      vecmu[n-1][m-1] = mu.cplx(i1(n),i2(m));
-      realmu_file << real(mu.cplx(i1(n), i2(m))) << " ";  
-      imagmu_file << imag(mu.cplx(i1(n), i2(m))) << " ";  
-    }
-    realmu_file << "\n";
-    imagmu_file << "\n";
-  }
-
-  return vecmu;
+  int N_save = 16;
+  int N_step = floor((N-2)/N_save);
+  int N_rem = (N-2) % N_save;
   
+  int N_sofar = 2;
+  
+  auto I = eye(H.sites());
+  MPOt<Tensor> cheb = oplus(I,H);
+
+  //normalization
+  int L = H.N();
+  cheb = cheb*pow(2.0, -L/2);
+  
+  for(int i = 0; i < N_step; i++){
+    
+    cheb = advance_dangler_chebyshevs(cheb, N_sofar, H, N_save, Maxm, cutoff, chebbd_file, prog_per);
+    N_sofar += N_save;
+    
+    IQTensor chtr = single_mu(cheb, I);
+    IQTensor mu = double_mu(cheb, cheb, j);
+    
+    //performance information
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> computation_time = t1 - t0;
+    timing_file << N_sofar << " " << computation_time.count() << "\n";
+    
+    OPENE(filename + "." + std::to_string(N_sofar) + ".re",  realmu_file);
+    OPENE(filename + "." + std::to_string(N_sofar) + ".im",  imagmu_file);
+    OPENE(filename + "." + std::to_string(N_sofar) + ".chtrre", chtrre_file);
+    OPENE(filename + "." + std::to_string(N_sofar) + ".chtrim", chtrim_file);
+    
+    write_singleKPM(chtr, N_sofar, chtrre_file, chtrim_file);
+    vecmu = write_doubleKPM(mu, N_sofar, realmu_file, imagmu_file);
+    std::cout << "\n";
+  }
+
+
+  if (N_rem != 0) {
+    
+    cheb = advance_dangler_chebyshevs(cheb, N_sofar, H, N_rem, Maxm, cutoff, chebbd_file, prog_per);
+    N_sofar += N_rem;
+    IQTensor chtr = single_mu(cheb, I);
+    IQTensor mu = double_mu(cheb, cheb, j);
+    
+    
+    //performance information
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> computation_time = t1 - t0;
+    timing_file << N_sofar << " " << computation_time.count() << "\n";
+
+    
+    OPENE(filename + ".re",  realmu_file);
+    OPENE(filename + ".im",  imagmu_file);
+    OPENE(filename + ".chtrre", chtrre_file);
+    OPENE(filename + ".chtrim", chtrim_file);
+    
+    write_singleKPM(chtr, N_sofar, chtrre_file, chtrim_file);
+    vecmu = write_doubleKPM(mu, N_sofar, realmu_file, imagmu_file);
+  }
+  
+  return vecmu;
 }
 
 #endif //#ifndef MPOKPM_CHEBYSHEV

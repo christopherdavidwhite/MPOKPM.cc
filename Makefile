@@ -59,7 +59,7 @@ mkdebugdir:
 
 #parameters for verification
 vL=6
-vN=8
+vN=30
 vM=512
 VDIR=verification-$(DATE)-$(COMMIT)
 vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)

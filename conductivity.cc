@@ -15,6 +15,7 @@
 #include "runtime-check.h"
 #include "util.cc"
 #include "chebyshev.cc"
+#include "globals.h"
 
 // Do we do runtime checks? Defined via makefile
 //#define CHECK false
@@ -136,35 +137,6 @@ int main(int argc, char **argv)
     }
 
   //==============================================================
-  //set some variables, mostly files/filenames
-
-
-  std::string realmu_filename = filename + ".re";
-  std::string imagmu_filename = filename + ".im";
-  std::string disout_filename = filename + ".dis";
-  std::string timing_filename = filename + ".tim";
-  std::string chebbd_filename = filename + ".chM"; //record bond dimensions of Chebyshev polynomials
-  
-  // macro OPENE declares second arg and initializes with filehandle to
-  // firstarg. Defined in util.cc
-
-  OPENE(filename + ".re",  realmu_file);
-  OPENE(filename + ".im",  imagmu_file);
-  OPENE(filename + ".dis", disout_file);
-  OPENE(filename + ".tim", timing_file);
-  OPENE(filename + ".chs", chsing_file);
-  OPENE(filename + ".chM", chebbd_file);
-  OPENE(filename + ".chtrre", chtrre_file);
-  OPENE(filename + ".chtrim", chtrim_file);
-
-  //If we need more than 10 digits of precision (say), we're in deep
-  //trouble anyway
-  realmu_file.precision(15);
-  imagmu_file.precision(15);
-  disout_file.precision(15);
-  timing_file.precision(15); //this really doesn't need this much precision
-
-  //==============================================================
   //Sanity check (are we doing runtime checks)
   
 #ifdef CHECK
@@ -202,6 +174,7 @@ int main(int argc, char **argv)
   H *= Q/opnorm_bound;
 
   //write the disorder to file
+  OPENE(filename + ".dis", disout_file);
   for(int b = 0; b < L; ++b) { disout_file << hzs[b] << " "; }
   disout_file << "\n";
 
@@ -218,15 +191,15 @@ int main(int argc, char **argv)
   // compute mu
   auto j = IQMPO(j_ampo);
 
-  auto t0 = std::chrono::high_resolution_clock::now();
+  t0 = std::chrono::high_resolution_clock::now();
   if (dangler){
-    auto mu = dangler_all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, chsing_file, chtrre_file, chtrim_file, N, Maxm, cutoff, 1);
+    auto mu = dangler_all_double_mu(H, j, filename, N, Maxm, cutoff, 1);
   } else {
-    auto mu = all_double_mu(H, j, realmu_file, imagmu_file, chebbd_file, chsing_file, chtrre_file, chtrim_file, N, Maxm, cutoff, 1);
+    Error("must use dangler");
   }
-  auto t1 = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> computation_time = t1 - t0;
-  timing_file << computation_time.count() << "\n";
+  //the function arguments and internal logic for dangler have
+  //diverged from those for non-dangler---bear this in mind
+  
 }
 
 #endif //ifndef TEST
