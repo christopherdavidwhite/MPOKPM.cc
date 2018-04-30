@@ -158,8 +158,8 @@ void write_singleKPM(IQTensor chtr,
   //print the single-mu traces
   i1 = chtr.inds()[0];
   for(int n = 1; n <= N; n++){
-    chtrre_file << real(chtr.cplx(i1(n))) << " ";  
-    chtrim_file << imag(chtr.cplx(i1(n))) << " ";
+    chtrre_file << real(chtr.cplx(i1(n))) << " " << std::flush;  
+    chtrim_file << imag(chtr.cplx(i1(n))) << " " << std::flush;
   }
 }
 
@@ -183,8 +183,8 @@ write_doubleKPM(IQTensor mu,
   for(int n = 1; n <= N; n++){
     for(int m = 1; m <= N; m++){
       vecmu[n-1][m-1] = mu.cplx(i1(n),i2(m));
-      realmu_file << real(mu.cplx(i1(n), i2(m))) << " ";  
-      imagmu_file << imag(mu.cplx(i1(n), i2(m))) << " ";  
+      realmu_file << real(mu.cplx(i1(n), i2(m))) << " " << std::flush;  
+      imagmu_file << imag(mu.cplx(i1(n), i2(m))) << " " << std::flush;  
     }
     realmu_file << "\n";
     imagmu_file << "\n";
