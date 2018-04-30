@@ -63,7 +63,7 @@ int main(int argc, char **argv)
       /* getopt_long stores the option index here. */
       int option_index = 0;
 
-      char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:m:pd", long_options, &option_index);
+      char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:m:s:pd", long_options, &option_index);
 
       /* Detect the end of the options. */
       if (c == -1)
@@ -109,6 +109,11 @@ int main(int argc, char **argv)
 	  cutoff = pow(10, -std::stod(optarg));
 	  std::cout << "cutoff = " << cutoff << "\n";
 	  break;
+	  
+        case 's':
+	  s = std::stoi(optarg);
+	  std::cout << "s = " << s << "\n";
+          break;
 	  
         case 'f':
 	  filename = optarg;
