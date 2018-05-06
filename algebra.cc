@@ -74,7 +74,7 @@ nmultMPAlgebra(MPOt<Tensor> const& Aorig,
   for(int i = N; i > 1; --i)
     {
       if(i == N) { clust = A.A(i) * B.A(i); }
-      else       { clust = A.A(i) * B.A(i) * nfork; }
+      else       { clust = A.A(i) * (B.A(i) * nfork); }
 
       nfork = Tensor(leftLinkInd(A,i),leftLinkInd(B,i),leftLinkInd(res,i).dag());
 
