@@ -82,7 +82,7 @@ nmultMPAlgebra(MPOt<Tensor> const& Aorig,
       denmatDecomp(clust,nfork,C ,Fromright,{"Cutoff", 1e-14});
       res.setA(i, C);
     }
-  clust = lbc * A.A(1)*B.A(1)*nfork;
+  clust = (lbc * A.A(1))*(B.A(1)*nfork);
   res.setA(1, clust);
   Tensor theta = clust * res.A(2);
 
