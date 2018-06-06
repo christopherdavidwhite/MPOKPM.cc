@@ -165,21 +165,24 @@ void write_singleKPM(IQTensor chtr,
 
 std::vector<std::vector<std::complex<double>>>
 write_doubleKPM(IQTensor mu,
-		int N,
 		std::ofstream& realmu_file,
 		std::ofstream& imagmu_file )
 { 
-  //todo assert(2 == mu.rank);
+  if (2 != rank(mu)) Error("write_doubleKPM: mu has wrong rank");
   
   IQIndex i1;
   IQIndex i2;
+  i1 = mu.inds()[0];
+  i2 = mu.inds()[1];
+  int N = i1.m();
+  std::cout << "write_doubleKPM " << N << "\n";
+  if (i2.m() != N) Error("write_doubleKPM: mu not square");
+  
   std::vector<std::vector<std::complex<double>>> vecmu;
   vecmu.reserve(N);
   //initialize mu to be 0
   for (int i = 0; i < N; i++) { vecmu.push_back(std::vector<std::complex<double>>(N,0)); }
   
-  i1 = mu.inds()[0];
-  i2 = mu.inds()[1];
   for(int n = 1; n <= N; n++){
     for(int m = 1; m <= N; m++){
       vecmu[n-1][m-1] = mu.cplx(i1(n),i2(m));

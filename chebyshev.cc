@@ -571,7 +571,7 @@ dangler_all_double_mu(MPOt<Tensor> const& H,
     OPENE(filename + "." + std::to_string(N_sofar) + ".chtrim", chtrim_file);
     
     write_singleKPM(chtr, N_sofar, chtrre_file, chtrim_file);
-    vecmu = write_doubleKPM(mu, N_sofar, realmu_file, imagmu_file);
+    vecmu = write_doubleKPM(mu, realmu_file, imagmu_file);
     std::cout << "\n";
   }
 
@@ -595,7 +595,7 @@ dangler_all_double_mu(MPOt<Tensor> const& H,
     OPENE(filename + ".chtrim", chtrim_file);
     
     write_singleKPM(chtr, N_sofar, chtrre_file, chtrim_file);
-    vecmu = write_doubleKPM(mu, N_sofar, realmu_file, imagmu_file);
+    vecmu = write_doubleKPM(mu, realmu_file, imagmu_file);
   }
   
   return vecmu;
