@@ -626,13 +626,13 @@ listandwrite_dangler(MPOt<Tensor> const& H,
   cheb = cheb*pow(2.0, -L/2);
   cheb.orthogonalize();
   iter.orthogonalize();
-  
+
   for(int i = 0; i < N; i++){
     cheb = advance_dangler_chebyshevs(cheb, iter, N_sofar, Maxm, cutoff);
     N_sofar++;
     
     //if we've hit the ceiling, quit: results will be junk.
-    if(Maxm >= maxM(cheb)) { writep = false; break;}
+    if(Maxm <= maxM(cheb)) { writep = false; break;}
 
     chebbd_file << N_sofar << " " << maxM(cheb) << "\n" << std::flush;
     
