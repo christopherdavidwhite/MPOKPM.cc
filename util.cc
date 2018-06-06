@@ -144,19 +144,17 @@ entanglement_spectrum(MPOt<Tensor> psi, int b)
   return spectrum;
 }
 
-
-
 void write_singleKPM(IQTensor chtr,
-		     int N,
 		     std::ofstream& chtrre_file,
 		     std::ofstream& chtrim_file)
   
 {
   IQIndex i1;
+  if (1 != rank(chtr)) Error("write_singleKPM: chtr has wrong rank");
 
-  //todo assert(1 == chtr.rank);
-  //print the single-mu traces
   i1 = chtr.inds()[0];
+  int N = i1.m();
+  
   for(int n = 1; n <= N; n++){
     chtrre_file << real(chtr.cplx(i1(n))) << " " << std::flush;  
     chtrim_file << imag(chtr.cplx(i1(n))) << " " << std::flush;
