@@ -49,7 +49,7 @@ $(APP): $(OBJECTS) $(ITENSOR_LIBS)
 	$(CCCOM) $(CCFLAGS) $(OBJECTS) -o $(APP) $(LIBFLAGS) -lpthread
 
 $(APP)-g: mkdebugdir $(GOBJECTS) $(ITENSOR_GLIBS)
-	$(CCCOM) $(CCGFLAGS) $(GOBJECTS) -o $(APP)-g $(LIBGFLAGS)  -lpthread -lgtest
+	$(CCCOM) $(CCGFLAGS) $(GOBJECTS) -o $(APP)-g $(LIBGFLAGS)  -lpthread 
 
 clean:
 	rm -fr .debug_objs *.o $(APP) $(APP)-g $(APP)-c
@@ -65,8 +65,9 @@ VDIR=verification-$(DATE)-$(COMMIT)
 vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
 
 #there's almost certainly a cleaner way to do this
-verification: conductivity
+verification: conductivity construct-algebra
 	rm -rf $(VDIR)
 	mkdir -p $(VDIR)
-	./conductivity -L $(vL) -N $(vN) -M $(vM) -f $(vfn) -d
+	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn) -d
+	./conductivity --sites $(vfn).sites --dangler $(vfn).chMPA -o $(vfn)
 	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn) -o $(vfn)
