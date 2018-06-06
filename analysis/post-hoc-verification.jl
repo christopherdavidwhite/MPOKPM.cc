@@ -125,28 +125,29 @@ function main(args)
         #@show trace(H^2)
         
         #check DoS trace
-        tnf = open("$ifn.chtrre")
-        trTncc = 2^(L/2)*[parse(Float64, s) for s in split(readline(tnf))]
-        N = length(trTncc)
-        close(tnf)
-        d,v = H |> full |> eig
+        # tnf = open("$ifn.chtrre")
+        # trTncc = 2^(L/2)*[parse(Float64, s) for s in split(readline(tnf))]
+        # N = length(trTncc)
+        # close(tnf)
+        # d,v = H |> full |> eig
 
-        trTned = zeros(N)
-        for n = 1:N
-            trTned[n] = sum(cos.((n-1)*acos.(d)))
-        end
-        @show trTned
-        @show trTncc
-        @show trTned - trTncc
-        semilogy(abs.(trTned - trTncc), ".")
-        xlabel("n", size=20)
-        ylabel("err in trace Tn",size=20)
-        savefig("$ofn-plt-trTnerr.pdf", bbox_inches="tight")
-        cla()
-        clf()
+        # trTned = zeros(N)
+        # for n = 1:N
+        #     trTned[n] = sum(cos.((n-1)*acos.(d)))
+        # end
+        # @show trTned
+        # @show trTncc
+        # @show trTned - trTncc
+        # semilogy(abs.(trTned - trTncc), ".")
+        # xlabel("n", size=20)
+        # ylabel("err in trace Tn",size=20)
+        # savefig("$ofn-plt-trTnerr.pdf", bbox_inches="tight")
+        # cla()
+        # clf()
 
         #check conductivity coeffs
         μcc = readdlm("$ifn.re")
+        N = size(μcc,1)
         j = imag(sum([2*(Y[l]*X[l+1] - X[l]*Y[l+1]) for l in 1:L-1]) |> full)
         μed = -exact_μ(Hfull,j,N) #minus because I took imag part of j
 
