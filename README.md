@@ -64,3 +64,11 @@ Functions of interest:
 	
 You'll see a parameter `Maxm` in various places; this controls how
 vigorously the lossy compression works.
+
+# Dependencies
+
+If you wish to run the verification code ("make verification"), you'll need
+ - Julia
+ - ArgParse
+ - PyPlot
+ - Seaborn (Python package)
