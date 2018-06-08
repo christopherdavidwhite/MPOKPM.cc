@@ -77,3 +77,27 @@ verification: conductivity construct-algebra dos
 	./dos          --sites $(vfn).2NJW.sites --dangler $(vfn).2NJW.chMPA -o $(vfn).2NJW
 	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).rfheis -o $(vfn).rfheis -m rfheis
 	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).2NJW -o $(vfn).2NJW -m 2NJW
+
+.PHONY: ps
+ps: construct-algebra.cc.ps chebyshev.cc.ps  dos.cc.ps conductivity.cc.ps util.cc.ps algebra.cc.ps Makefile.ps
+
+construct-algebra.cc.ps: construct-algebra.cc
+	enscript --line-numbers -2 -E -q -Z -p - -f Courier6 $< > $@
+
+chebyshev.cc.ps: chebyshev.cc
+	enscript --line-numbers -2 -E -q -Z -p - -f Courier6 $< > $@
+
+dos.cc.ps: dos.cc
+	enscript --line-numbers -2 -E -q -Z -p - -f Courier6 $< > $@
+
+conductivity.cc.ps: conductivity.cc
+	enscript --line-numbers -2 -E -q -Z -p - -f Courier6 $< > $@
+
+util.cc.ps: util.cc
+	enscript --line-numbers -2 -E -q -Z -p - -f Courier6 $< > $@
+
+algebra.cc.ps: algebra.cc
+	enscript --line-numbers -2 -E -q -Z -p - -f Courier6 $< > $@
+
+Makefile.ps: Makefile
+	enscript --line-numbers -2 -E -q -Z -p - -f Courier6 $< > $@
