@@ -95,6 +95,43 @@ rfheis(SiteSet sites, double hz, std::default_random_engine e)
 }
 
 std::tuple<IQMPO,std::vector<double>, double>
+rf_2NJW(SiteSet sites, double W, std::default_random_engine e)
+{
+  std::normal_distribution<double> d;
+  std::vector<double> fields;
+  auto L = sites.N();
+
+  auto H_ampo = AutoMPO(sites);
+  //++b or b++?
+  for(int b = 1; b < L; ++b)
+    {
+      H_ampo += 0.5,"S+",b,"S-",b+1;
+      H_ampo += 0.5,"S-",b,"S+",b+1;
+      H_ampo += 1.0,"Sz",b,"Sz",b+1;
+    }
+  for(int b = 1; b < L-1; ++b)
+    {
+      H_ampo += 1.0,"S+",b,"Sz",b+1,"S-",b+2;
+      H_ampo += 1.0,"S-",b,"Sz",b+1,"S+",b+2;
+    }
+  
+  double sumhzj = 0;
+  for(int b = 1; b <= L; ++b)
+    {
+      double hzj = W*d(e);
+      sumhzj += std::abs(hzj);
+      fields.push_back(hzj);
+      H_ampo += hzj, "Sz",b;
+    }
+  auto H = IQMPO(H_ampo);
+
+  //operator norm is bounded by sum of operator norms of terms
+  double opnorm_bound = 3*0.25*(L-1) + 2*0.25*(L-2) + sumhzj*0.5;
+  return std::make_tuple(H, fields, opnorm_bound);
+}
+
+
+std::tuple<IQMPO,std::vector<double>, double>
 rpara(SiteSet sites, double hz, std::default_random_engine e)
 {
   //cf https://isocpp.org/files/papers/n3551.pdf

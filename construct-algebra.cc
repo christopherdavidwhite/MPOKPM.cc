@@ -175,6 +175,7 @@ int main(int argc, char **argv)
   if     (model == "rfheis") { std::tie(H, hzs, opnorm_bound) = rfheis(sites, hz, e); }
   else if(model == "xx")     { std::tie(H, hzs, opnorm_bound) = XX(sites, hz, e); }
   else if(model == "rpara")  { std::tie(H, hzs, opnorm_bound) = rpara(sites, hz, e); }
+  else if(model == "2NJW")   { std::tie(H, hzs, opnorm_bound) = rf_2NJW(sites, hz, e); }
   else {std::cerr << "unknown model " << model ; exit(-1);}
   
   H *= Q/opnorm_bound;

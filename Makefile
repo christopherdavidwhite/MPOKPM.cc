@@ -65,9 +65,15 @@ VDIR=verification-$(DATE)-$(COMMIT)
 vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
 
 #there's almost certainly a cleaner way to do this
-verification: conductivity construct-algebra
+#in particular: separate target for each model
+verification: conductivity construct-algebra dos
 	rm -rf $(VDIR)
 	mkdir -p $(VDIR)
-	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn) -d
-	./conductivity --sites $(vfn).sites --dangler $(vfn).chMPA -o $(vfn)
-	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn) -o $(vfn)
+	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).rfheis -d -m rfheis
+	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).2NJW   -d -m 2NJW
+	./conductivity --sites $(vfn).rfheis.sites --dangler $(vfn).rfheis.chMPA -o $(vfn).rfheis
+	./conductivity --sites $(vfn).2NJW.sites --dangler $(vfn).2NJW.chMPA -o $(vfn).2NJW #this will be wrong
+	./dos          --sites $(vfn).rfheis.sites --dangler $(vfn).rfheis.chMPA -o $(vfn).rfheis
+	./dos          --sites $(vfn).2NJW.sites --dangler $(vfn).2NJW.chMPA -o $(vfn).2NJW
+	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).rfheis -o $(vfn).rfheis -m rfheis
+	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).2NJW -o $(vfn).2NJW -m 2NJW
