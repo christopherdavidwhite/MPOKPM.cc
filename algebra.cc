@@ -105,4 +105,97 @@ nmultMPAlgebra(MPOt<Tensor> const& Aorig,
 
 }//void nmultMPO(const MPOType& Aorig, const IQMPO& Borig, IQMPO& res,Real cut, int maxm)
 
+template<class Tensor>
+void
+fitmultMPAlgebra(MPOt<Tensor> const& psi,
+		 MPOt<Tensor> const& origK,
+		 Tensor const& lbc, //left boundary condition
+		 MPOt<Tensor>& res,
+		 Sweeps const& sweeps,
+		 Args args)
+{
+  auto N = psi.N();
+  auto verbose = args.getBool("Verbose",false);
+  auto normalize = args.getBool("Normalize",false);
+  
+  auto origPsi = psi;
+  
+  if(not res) res = origPsi;
+  res.mapprime(1,2, Site);
+  res.position(1);
+  
+  auto K = origK;
+  
+  K.primeall();
+  origPsi.setA(1, origPsi.A(1)*lbc);
+
+  /* Need to make the dangler indices match up. This means sticking
+     something like lbc onto res. Can't just be lbc, because that'd
+     leave an extra dangler index (the one that's supposed to hook up
+     to K) dangling---we need to tensor on a vector, call it vec,
+     such that lbc*vec is full-rank. Right way to do this
+     *generically* is to choose vec random, but I know things about
+     lbc and I'm lazy.*/
+
+  //TODO assert that there's only one
+  auto i = findtype(K.A(1), Dangler);
+  auto vec = Tensor(i);
+  vec.set(i(1), 1);
+  res.setA(1, res.A(1)*lbc*vec);
+  
+  auto BK = std::vector<Tensor>(N+2);
+  BK.at(N) = origPsi.A(N)*K.A(N)*dag(res.A(N));
+  for(auto n = N-1; n > 2; --n) { BK.at(n) = BK.at(n+1)*origPsi.A(n)*K.A(n)*dag(res.A(n)); }
+  
+  for(auto sw : range1(sweeps.nsweep())) {
+    args.add("Sweep",sw);
+    args.add("Cutoff",sweeps.cutoff(sw));
+    args.add("Minm",sweeps.minm(sw));
+    args.add("Maxm",sweeps.maxm(sw));
+    args.add("Noise",sweeps.noise(sw));
+    
+    for(int b = 1, ha = 1; ha <= 2; sweepnext(b,ha,N))
+      {
+	  
+	if(verbose) { printfln("Sweep=%d, HS=%d, Bond=(%d,%d)",sw,ha,b,b+1); }
+	auto lwfK = (BK.at(b-1) ? BK.at(b-1)*origPsi.A(b) : origPsi.A(b));
+	lwfK *= K.A(b);
+	auto rwfK = (BK.at(b+2) ? BK.at(b+2)*origPsi.A(b+1) : origPsi.A(b+1));
+	rwfK *= K.A(b+1);
+	  
+	auto wfK = lwfK*rwfK;
+	  
+	if(normalize) wfK /= norm(wfK);
+	//auto spec = res.svdBond(b,wfK,(ha==1?Fromleft:Fromright),PH,args);
+	res.svdBond(b,wfK,(ha==1?Fromleft:Fromright),args);
+	    
+	if(ha == 1) { BK.at(b) = lwfK * dag(res.A(b)); }
+	else { BK.at(b+1) = rwfK * dag(res.A(b+1)); }
+      }
+  }
+  res.mapprime(2,1, Site);
+}
+
+
+template<class Tensor>
+void
+fitmultMPAlgebra( MPOt<Tensor> const& A,
+		  MPOt<Tensor> const& B,
+		  Tensor const& lbc,
+		  MPOt<Tensor>& res,
+		  Args const& args)
+{
+  auto nsweep = args.getInt("Nsweep",2);
+  Sweeps sweeps(nsweep);
+  auto cutoff = args.getReal("Cutoff",-1);
+  if(cutoff >= 0) sweeps.cutoff() = cutoff;
+  auto maxm = args.getInt("Maxm",-1);
+  if(maxm >= 1) sweeps.maxm() = maxm;
+  fitmultMPAlgebra(A,B,lbc, res,sweeps,args);
+}
+
+
+
+
+
 #endif //#ifndef MPOKPM_ALGEBRA
