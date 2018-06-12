@@ -88,7 +88,7 @@ double_mu(MPOt<Tensor> const& Tn,
 template <class Tensor>
 MPOt<Tensor>
 advance_dangler_chebyshevs(MPOt<Tensor>& cheb, MPOt<Tensor> iter,
-			   int n0, int Maxm, double cutoff)
+			   int n0, int Maxm, double cutoff, bool fit, int sweeps)
 {
   //n is the number of Chebyshevs we've already computed.
   //note that this n is notionally a 1-index: "T1" is identity
@@ -108,9 +108,13 @@ advance_dangler_chebyshevs(MPOt<Tensor>& cheb, MPOt<Tensor> iter,
   for(int l = 1; l <= n; l++) { iterbc.set(k(l),id(l),jd(1), 1.0); }
   iterbc.set(k(n+1), id(n),   jd(2), 2.0);  //2*H*Tn
   iterbc.set(k(n+1), id(n-1), jd(1), -1.0); // - Tn-1
-      
-  //nmultMPAlgebra(cheb, iter, iterbc, store, {"Maxm", Maxm, "Cutoff", cutoff});
-  fitmultMPAlgebra(cheb, iter, iterbc, store, {"Maxm", Maxm, "Cutoff", cutoff}); 
+
+  if (fit)
+    nmultMPAlgebra(cheb, iter, iterbc, store,
+		   {"Maxm", Maxm, "Cutoff", cutoff});
+  else
+    fitmultMPAlgebra(cheb, iter, iterbc, store,
+		     {"Maxm", Maxm, "Cutoff", cutoff}, sweeps); 
   cheb = store; //copies! Bad! Can go do rvalue magic...
 
   return cheb;
@@ -119,8 +123,10 @@ advance_dangler_chebyshevs(MPOt<Tensor>& cheb, MPOt<Tensor> iter,
 template <class Tensor>
 MPOt<Tensor>
 listandwrite_dangler(MPOt<Tensor> const& H,
-		      std::string const& filename,
-		      int N, int Maxm, double cutoff, int prog_per)
+		     std::string const& filename,
+		     int N,
+		     int Maxm, double cutoff, bool fit, int sweeps,
+		     int prog_per)
 {
   // macro OPENE declares second arg and initializes with filehandle to
   // firstarg. Defined in util.cc
@@ -143,7 +149,7 @@ listandwrite_dangler(MPOt<Tensor> const& H,
   iter.orthogonalize();
 
   for(int i = 0; i < N; i++){
-    cheb = advance_dangler_chebyshevs(cheb, iter, N_sofar, Maxm, cutoff);
+    cheb = advance_dangler_chebyshevs(cheb, iter, N_sofar, Maxm, cutoff, fit, sweeps);
     N_sofar++;
     
     //if we've hit the ceiling, quit: results will be junk.

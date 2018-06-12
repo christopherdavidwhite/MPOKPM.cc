@@ -44,19 +44,24 @@ int main(int argc, char **argv)
   std::string filename = "/tmp/conductivity";
   std::string model = "rfheis";
 
+  int isweep_flag; //do we multiply with sweeps/fit?
+  bool nsweeps; //number of sweeps
+
   int option_index = 0;
   while (1) {
     static struct option long_options[] =
       {
+	{"sweep", no_argument, &isweep_flag, 1},
 	{"system-size",     required_argument,        0, 'L'},
 	{"bond-dimension",  required_argument,        0, 'M'},
 	{"chebyshev-order", required_argument,        0, 'N'},
 	{"model",   required_argument, 0, 'm'},
 	{"output",  required_argument, 0, 'o'},
+	{"nsweeps",  required_argument, 0, 'w'},
 	{0, 0, 0, 0}
       };
 
-      char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:m:s:pd", long_options, &option_index);
+      char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:m:s:w:pd", long_options, &option_index);
 
       if (c == -1) break;
       switch (c) {
@@ -91,6 +96,11 @@ int main(int argc, char **argv)
 	  std::cout << "s = " << s << "\n";
           break;
 	  
+        case 'w':
+	  nsweeps = std::stoi(optarg);
+	  std::cout << "nsweeps = " << nsweeps << "\n";
+          break;
+	  
         case 'f':
 	  filename = optarg;
 	  std::cout <<  filename << "\n";
@@ -119,7 +129,8 @@ int main(int argc, char **argv)
 
   //==============================================================
   //Sanity check (are we doing runtime checks)
-  
+
+  bool sweep_flag = isweep_flag;
 #ifdef CHECK
   std::cout << "runtime checks inoperative" << "\n";
   exit(1);
@@ -164,7 +175,7 @@ int main(int argc, char **argv)
   //==============================================================
   // compute mu
   t0 = std::chrono::high_resolution_clock::now();
-  auto cheb = listandwrite_dangler(H, filename, N, Maxm, cutoff, 32);
+  auto cheb = listandwrite_dangler(H, filename, N, Maxm, cutoff, sweep_flag, nsweeps, 32);
 }
 
 #endif //ifndef TESTING

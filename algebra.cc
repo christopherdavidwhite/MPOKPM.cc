@@ -183,9 +183,9 @@ fitmultMPAlgebra( MPOt<Tensor> const& A,
 		  MPOt<Tensor> const& B,
 		  Tensor const& lbc,
 		  MPOt<Tensor>& res,
-		  Args const& args)
+		  Args const& args,
+int nsweep )
 {
-  auto nsweep = args.getInt("Nsweep",2);
   Sweeps sweeps(nsweep);
   auto cutoff = args.getReal("Cutoff",-1);
   if(cutoff >= 0) sweeps.cutoff() = cutoff;
