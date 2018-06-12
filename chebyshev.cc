@@ -110,11 +110,11 @@ advance_dangler_chebyshevs(MPOt<Tensor>& cheb, MPOt<Tensor> iter,
   iterbc.set(k(n+1), id(n-1), jd(1), -1.0); // - Tn-1
 
   if (fit)
-    nmultMPAlgebra(cheb, iter, iterbc, store,
-		   {"Maxm", Maxm, "Cutoff", cutoff});
-  else
     fitmultMPAlgebra(cheb, iter, iterbc, store,
-		     {"Maxm", Maxm, "Cutoff", cutoff}, sweeps); 
+		     {"Maxm", Maxm, "Cutoff", cutoff}, sweeps);
+  else
+    nmultMPAlgebra(cheb, iter, iterbc, store,
+		       {"Maxm", Maxm, "Cutoff", cutoff});
   cheb = store; //copies! Bad! Can go do rvalue magic...
 
   return cheb;
