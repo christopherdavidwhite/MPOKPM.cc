@@ -45,7 +45,7 @@ int main(int argc, char **argv)
   std::string model = "rfheis";
 
   int isweep_flag; //do we multiply with sweeps/fit?
-  bool nsweeps; //number of sweeps
+  int nsweeps; //number of sweeps
 
   int option_index = 0;
   while (1) {
