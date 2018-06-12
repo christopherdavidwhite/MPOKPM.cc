@@ -29,14 +29,6 @@ full(MPOt<Tensor> B)
   return L;
 }
 
-
-template <class Tensor>
-double
-operatornorm(MPOt<Tensor> const& B)
-{
-  //TODO
-}
-
 std::tuple<IQMPO,std::vector<double>, double>
 XX(SiteSet sites, double hz, std::default_random_engine e)
 {
