@@ -42,7 +42,7 @@ int main(int argc, char **argv)
   double Q = 1;
   bool profligate = false; //use memory-profligate strategy?
   bool dangler = false;
-  std::string filename = "/tmp/conductivity.txt";
+  std::string filename = "/tmp/conductivity";
   std::string model = "rfheis";
 
 

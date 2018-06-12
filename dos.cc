@@ -23,7 +23,7 @@ using namespace itensor;
 #ifndef TESTING //test has its own main function
 int main(int argc, char **argv)
 {
-  std::string output_filename  = "/tmp/conductivity.txt";
+  std::string output_filename  = "/tmp/conductivity";
   std::string dangler_filename = "/tmp/conductivity.chMPA";
   std::string siteset_filename = "/tmp/conductivity.sites";
   std::string model = "rfheis";
