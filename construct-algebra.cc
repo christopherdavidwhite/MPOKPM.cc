@@ -45,51 +45,28 @@ int main(int argc, char **argv)
   std::string filename = "/tmp/conductivity";
   std::string model = "rfheis";
 
-
-  //==============================================================
-  //Parse Command Line Arguments
-  while (1)
-    {
-      static struct option long_options[] =
-        {
-          /* These options don’t set a flag.
-             We distinguish them by their indices. */
-          {"system-size",     required_argument,        0, 'L'},
-          {"bond-dimension",  required_argument,        0, 'M'},
-          {"chebyshev-order", required_argument,        0, 'N'},
-	  {"output-file",     required_argument,        0, 'f'},
-          {0, 0, 0, 0}
-        };
-      /* getopt_long stores the option index here. */
-      int option_index = 0;
+  int option_index = 0;
+  while (1) {
+    static struct option long_options[] =
+      {
+	{"system-size",     required_argument,        0, 'L'},
+	{"bond-dimension",  required_argument,        0, 'M'},
+	{"chebyshev-order", required_argument,        0, 'N'},
+	{"model",   required_argument, 0, 'm'},
+	{"output",  required_argument, 0, 'o'},
+	{0, 0, 0, 0}
+      };
 
       char c = getopt_long (argc, argv, "L:M:N:h:f:e:Q:m:s:pd", long_options, &option_index);
 
-      /* Detect the end of the options. */
-      if (c == -1)
-        break;
-
-      switch (c)
-        {
-        case 0:
-          /* If this option set a flag, do nothing else now. */
-          if (long_options[option_index].flag != 0)
-            break;
-
-	  //alternate strategies
-	case 'p':
-	  profligate = true;
-	  break;
-	  
-	case 'd':
-	  dangler = true;
-	  break;
-	  
+      if (c == -1) break;
+      switch (c) {
+        case 0: if (long_options[option_index].flag != 0) break;
         case 'L':
 	  L = std::stoi(optarg);
 	  std::cout << "L = " << L << "\n";
-          break;
-
+	  break;
+	  
         case 'M':
 	  Maxm = std::stoi(optarg);
 	  std::cout << "Maxm = " << Maxm << "\n";
