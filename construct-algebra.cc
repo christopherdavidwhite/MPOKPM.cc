@@ -41,7 +41,6 @@ int main(int argc, char **argv)
   double cutoff = 1e-14;
   double Q = 1;
   bool profligate = false; //use memory-profligate strategy?
-  bool dangler = false;
   std::string filename = "/tmp/conductivity";
   std::string model = "rfheis";
 
@@ -165,11 +164,7 @@ int main(int argc, char **argv)
   //==============================================================
   // compute mu
   t0 = std::chrono::high_resolution_clock::now();
-  if (dangler){ auto cheb = listandwrite_dangler(H, filename, N, Maxm, cutoff, 32); }
-  else        { Error("must use dangler"); }
-  //the function arguments and internal logic for dangler have
-  //diverged from those for non-dangler---bear this in mind
-  
+  auto cheb = listandwrite_dangler(H, filename, N, Maxm, cutoff, 32);
 }
 
-#endif //ifndef TEST
+#endif //ifndef TESTING
