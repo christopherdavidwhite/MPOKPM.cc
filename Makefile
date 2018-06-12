@@ -69,8 +69,8 @@ vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
 verification: conductivity construct-algebra dos
 	rm -rf $(VDIR)
 	mkdir -p $(VDIR)
-	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).rfheis -d -m rfheis
-	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).2NJW   -d -m 2NJW
+	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).rfheis -m rfheis
+	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).2NJW  -m 2NJW
 	./conductivity --sites $(vfn).rfheis.sites --dangler $(vfn).rfheis.chMPA -o $(vfn).rfheis
 	./conductivity --sites $(vfn).2NJW.sites --dangler $(vfn).2NJW.chMPA -o $(vfn).2NJW #this will be wrong
 	./dos          --sites $(vfn).rfheis.sites --dangler $(vfn).rfheis.chMPA -o $(vfn).rfheis
