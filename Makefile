@@ -52,7 +52,7 @@ $(APP)-g: mkdebugdir $(GOBJECTS) $(ITENSOR_GLIBS)
 	$(CCCOM) $(CCGFLAGS) $(GOBJECTS) -o $(APP)-g $(LIBGFLAGS)  -lpthread 
 
 clean:
-	rm -fr .debug_objs *.o $(APP) $(APP)-g $(APP)-c
+	rm -fr .debug_objs *.o *.ps $(APP) $(APP)-g $(APP)-c
 
 mkdebugdir:
 	mkdir -p .debug_objs
