@@ -1,82 +1,34 @@
-# copied from Miles' example
-
 LIBRARY_DIR=$(ITENSOR_DIR)
 
 COMMIT=`git log | head -1 | cut -d ' ' -f 2 | cut -b 1-7`
 DATE=`date +%Y-%m-%d`
 
-ifdef app
-APP=$(app)
-else
-APP=conductivity
-endif
-
 ifndef JULIA
 JULIA=julia
 endif
-
-CCFILES=$(APP).cc
-#################################################################
-#################################################################
-#################################################################
-#################################################################
 
 
 include $(LIBRARY_DIR)/this_dir.mk
 include $(LIBRARY_DIR)/options.mk
 
-TENSOR_HEADERS=$(LIBRARY_DIR)/itensor/all.h
+.PHONY: all
+all: construct-algebra conductivity dos
 
-#Mappings --------------
-OBJECTS=$(patsubst %.cc,%.o, $(CCFILES))
-GOBJECTS=$(patsubst %,.debug_objs/%, $(OBJECTS))
 
-#Rules ------------------
-
-%.o: %.cc $(HEADERS) $(TENSOR_HEADERS)
+%.o: %.cc algebra.cc util.cc chebyshev.cc
 	$(CCCOM) -c $(CCFLAGS) -o $@ $<
 
-.debug_objs/%.o: %.cc $(HEADERS) $(TENSOR_HEADERS)
-#	$(CCCOM) -c $(CCGFLAGS) --define-macro CHECK=true -o $@ $<
-	$(CCCOM) -c $(CCGFLAGS) -o $@ $<
-#Targets -----------------
+conductivity: conductivity.o 
+	$(CCCOM) $(CCFLAGS) $< -o $@ $(LIBFLAGS) -lpthread
 
-build: $(APP)
-debug: $(APP)-g
-check: $(APP)-c
+dos: dos.o 
+	$(CCCOM) $(CCFLAGS) $< -o $@ $(LIBFLAGS) -lpthread
 
-$(APP): $(OBJECTS) $(ITENSOR_LIBS)
-	$(CCCOM) $(CCFLAGS) $(OBJECTS) -o $(APP) $(LIBFLAGS) -lpthread
-
-$(APP)-g: mkdebugdir $(GOBJECTS) $(ITENSOR_GLIBS)
-	$(CCCOM) $(CCGFLAGS) $(GOBJECTS) -o $(APP)-g $(LIBGFLAGS)  -lpthread 
+construct-algebra: construct-algebra.o 
+	$(CCCOM) $(CCFLAGS) $< -o $@ $(LIBFLAGS) -lpthread
 
 clean:
-	rm -fr .debug_objs *.o *.ps $(APP) $(APP)-g $(APP)-c
-
-mkdebugdir:
-	mkdir -p .debug_objs
-
-#parameters for verification
-vL=6
-vN=30
-vM=512
-VDIR=verification-$(DATE)-$(COMMIT)
-vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
-
-#there's almost certainly a cleaner way to do this
-#in particular: separate target for each model
-verification: conductivity construct-algebra dos
-	rm -rf $(VDIR)
-	mkdir -p $(VDIR)
-	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).rfheis -m rfheis
-	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).2NJW  -m 2NJW
-	./conductivity --sites $(vfn).rfheis.sites --dangler $(vfn).rfheis.chMPA -o $(vfn).rfheis
-	./conductivity --sites $(vfn).2NJW.sites --dangler $(vfn).2NJW.chMPA -o $(vfn).2NJW #this will be wrong
-	./dos          --sites $(vfn).rfheis.sites --dangler $(vfn).rfheis.chMPA -o $(vfn).rfheis
-	./dos          --sites $(vfn).2NJW.sites --dangler $(vfn).2NJW.chMPA -o $(vfn).2NJW
-	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).rfheis -o $(vfn).rfheis -m rfheis
-	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).2NJW -o $(vfn).2NJW -m 2NJW
+	rm -fr .debug_objs *.o *-g *.ps conductivity dos construct-algebra
 
 .PHONY: ps
 ps: construct-algebra.cc.ps chebyshev.cc.ps  dos.cc.ps conductivity.cc.ps util.cc.ps algebra.cc.ps Makefile.ps
