@@ -16,6 +16,7 @@
 
 #include "runtime-check.h"
 #include "chebyshev.cc"
+#include "util.h"
 #include "globals.h"
 		
 using namespace itensor;
