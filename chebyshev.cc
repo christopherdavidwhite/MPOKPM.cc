@@ -133,6 +133,9 @@ listandwrite_dangler(MPOt<Tensor> const& H,
   OPENE(filename + ".tim", timing_file);
   OPENE(filename + ".chM", chebbd_file);
 
+  //simulation start time
+  std::chrono::time_point<std::chrono::high_resolution_clock> t0;
+  t0 = std::chrono::high_resolution_clock::now();
   std::cout << "using dangler\n";
 
   int N_sofar = 2;
