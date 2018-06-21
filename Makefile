@@ -12,24 +12,38 @@ include $(LIBRARY_DIR)/this_dir.mk
 include $(LIBRARY_DIR)/options.mk
 
 .PHONY: all
-all: construct-algebra conductivity dos
+all: construct-algebra conductivity dos twopoint-correlation
 
+OBJFILES=util.o
+HFILES=util.h
 
-%.o: %.cc algebra.cc util.cc chebyshev.cc
+%.o: %.cc algebra.cc util.cc chebyshev.cc globals.h util.h
 	$(CCCOM) -c $(CCFLAGS) -o $@ $<
 
-conductivity: conductivity.o 
-	$(CCCOM) $(CCFLAGS) $< -o $@ $(LIBFLAGS) -lpthread
+conductivity: conductivity.o $(OBJFILES) $(HFILES)
+	$(CCCOM) $(CCFLAGS) $< -o $@ $(LIBFLAGS) $(OBJFILES) -lpthread
 
-dos: dos.o 
-	$(CCCOM) $(CCFLAGS) $< -o $@ $(LIBFLAGS) -lpthread
+twopoint-correlation: twopoint-correlation.o $(OBJFILES) $(HFILES)
+	$(CCCOM) $(CCFLAGS) $< $(OBJFILES) -o $@ $(LIBFLAGS) -lpthread
 
-construct-algebra: construct-algebra.o 
-	$(CCCOM) $(CCFLAGS) $< -o $@ $(LIBFLAGS) -lpthread
+dos: dos.o $(OBJFILES) $(HFILES)
+	$(CCCOM) $(CCFLAGS) $< $(OBJFILES) -o $@ $(LIBFLAGS) -lpthread
+
+construct-algebra: construct-algebra.o $(OBJFILES) $(HFILES)
+	$(CCCOM) $(CCFLAGS) $< $(OBJFILES) -o $@ $(LIBFLAGS) -lpthread
 
 clean:
 	rm -fr .debug_objs *.o *-g *.ps conductivity dos construct-algebra
 
+#parameters for verification
+vL=6
+vN=30
+vM=512
+VDIR=verification-$(DATE)-$(COMMIT)
+vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
+
+#there's almost certainly a cleaner way to do this
+#in particular: separate target for each model
 verification: conductivity construct-algebra dos
 	rm -rf $(VDIR)
 	mkdir -p $(VDIR)

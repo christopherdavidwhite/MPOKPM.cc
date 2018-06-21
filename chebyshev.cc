@@ -4,7 +4,7 @@
 #include <chrono>
 #include <string>
 
-#include "util.cc"
+#include "util.h"
 #include "algebra.cc"
 #include "globals.h"
 
