@@ -29,6 +29,17 @@ template <class Tensor>
 Spectrum
 entanglement_spectrum(MPOt<Tensor> psi, int b);
 
+template <class Tensor>
+Tensor
+single_mu(MPOt<Tensor> const& Tn,
+	  MPOt<Tensor> const& opp );
+  
+template <class Tensor>
+Tensor
+double_mu(MPOt<Tensor> const& Tn,
+	  MPOt<Tensor> const& Tm,
+	  MPOt<Tensor> const& j);
+
 void write_singleKPM(IQTensor chtr,
 		     std::ofstream& chtrre_file,
 		     std::ofstream& chtrim_file);
