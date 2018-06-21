@@ -13,7 +13,7 @@
 #include <getopt.h>
 
 #include "runtime-check.h"
-#include "util.cc"
+#include "util.h"
 #include "chebyshev.cc"
 #include "globals.h"
 
@@ -174,7 +174,6 @@ int main(int argc, char **argv)
 
   //==============================================================
   // compute mu
-  t0 = std::chrono::high_resolution_clock::now();
   auto cheb = listandwrite_dangler(H, filename, N, Maxm, cutoff, sweep_flag, nsweeps, 32);
 }
 
