@@ -215,9 +215,179 @@ write_doubleKPM(IQTensor mu,
       realmu_file << real(mu.cplx(i1(n), i2(m))) << " " << std::flush;  
       imagmu_file << imag(mu.cplx(i1(n), i2(m))) << " " << std::flush;  
     }
-    realmu_file << "\n";
-    imagmu_file << "\n";
+    if (n < N) {
+      realmu_file << "\n";
+      imagmu_file << "\n";
+    }
   }
   return vecmu;
 }
+
+template <class Tensor>
+MPOt<Tensor>
+commutator(MPOt<Tensor> H,
+	   MPOt<Tensor> q)
+{
+  MPOt<Tensor> Hq, qH, Hqb;
+  nmultMPO(H, q, Hq, {"Cutoff", 1e-15});
+  nmultMPO(q, H, qH, {"Cutoff", 1e-15});
+  Hqb = (Hq - qH).orthogonalize();
+}
+
+template <class Tensor>
+std::vector<Tensor>
+current(MPOt<Tensor> H,
+	int p, //diameter of local conserved quantity
+	std::vector<MPOt<Tensor>> qlist )
+{
+  //assume qlist[0] starts at left end of chain
+  std::vector<Tensor> rightwards_currents;
+
+  int N = H.N();
+
+  //for verifying that it is in fact a conserved quantity
+  MPOt<Tensor> Hqb = -im*commutator(H,qlist[0]);//list is zero-indexed
+  MPOt<Tensor> HQb = Hqb;
+  rightwards_currents[0] = -Hqb;
+
+  //jleft is list index not site index (zero-indexing vs 1-index)
+  for(int jleft = 1; jleft <= N-p; jleft++) {
+    if(qlist[jleft].N() != N) { Error("current: qlist[j] wrong length");}
+    Hqb = -im*commutator(H, qlist[jleft]);
+    /* Hqb = rightwards + leftwards.
+           = rightwards - (next rightwards)
+       (next rightwards) = rightwards - Hqb
+     */
+    rightwards_currents.push_back((rightwards_currents[jleft - 1] - Hqb).orthogonalize());
+    HQb += Hqb;
+    HQb.orthogonalize();
+  }
+
+  //TODO HQb zero
+
+  return rightwards_currents;
+}
+
+/* construct the identity-environments (partial trace
+   environments) */
+template <class Tensor>
+std::vector<MPOt<Tensor>>
+left_identity_environments(MPOt<Tensor> H)
+{
+  auto sites = H.sites();
+  int N = H.N();
+  std::vector<Tensor> left_id_environments;
+
+  Tensor El = 0.5*H.A(1)*sites.op("Id",1);
+  left_id_environments.push_back(El);
+  
+  //j is vector (0-) index, not site (1-) index
+  for(int j = 1; j < N; j++){
+    El = 0.5*(El*(H.A(j+1)*sites.op("Id", j+1)));
+    left_id_environments.push_back(El);
+  }
+  return El;
+}
+
+template <class Tensor>
+std::vector<MPOt<Tensor>>
+right_identity_environments(MPOt<Tensor> H)
+{
+  auto sites = H.sites();
+  std::vector<Tensor> right_id_environments;
+  int N = H.A(N);
+  Tensor Er = 0.5*H.A(N)*sites.op("Id",N);
+  right_id_environments.push_back(Er);
+  
+  //j is vector (0-) index, not site (1-) index
+  for(int j = 1; j < N; j++){
+    Er = 0.5*(Er*(H.A(N-j-1)*sites.op("Id", N-j-1)));
+    right_id_environments.push_back(Er);
+  }
+
+  Er.reverse();
+
+  return Er;
+}
+
+/* Partial traces down to each contiguous p-site region, with factors
+   of 1/2 */
+template <class Tensor>
+std::vector<MPOt<Tensor>>
+psite_components(MPOt<Tensor> H, int p,
+		 std::vector<Tensor> El,
+		 std::vector<Tensor> Er)
+{
+
+  //sanity check
+  if(10 < p){Error("Dangerously large p in psite_components");}
+  int N = H.N();
+  std::vector<Tensor> cpts;
+
+  cpts.push_back(H.A(1)*Er[0+1]);
+  //jleft is a site index, not a vector index
+  for(int jleft = 2; jleft <= N-p; jleft++){
+    Tensor thiscpt = El[jleft];
+    for(int k = jleft; k <= jleft + p; k++){ thiscpt *= H.A(k); }
+    
+    /* consider e.g. jleft = 1, p = 1: this is a single-site op on
+       site 1 (leftmost site). We want the partial-trace up through
+       site 2; that's Er[1] = Er[jleft + p - 1].
+    */
+    if(jleft != N-p) { thiscpt *= Er[jleft + p - 1 ]; }
+    cpts.push_back(thiscpt);
+  }
+
+  cpts.push_back(El[N-2]*H.A(N));
+  return cpts;
+}
+
+/* Take a tensor t that's an operator on sites [jleft, jright] and
+   turn it into an operator on sites [kleft, kright] by tensoring on
+   identities from SiteSet sites.
+
+   Doesn't verify that t is what it claims to be. (Probably should...)
+
+   jleft, jright are site indices, not vector indices.
+ */
+template <class Tensor>
+Tensor
+embed(Tensor t, SiteSet sites,
+      int jleft, int jright,
+      int kleft, int kright )
+{
+  assert(kleft <= jleft);
+  assert(jright <= kright);
+  for(int n = kleft; n < jright; n++)     { t *= sites.op("Id", n);}
+  for(int n = jright+1; n <= kright; n++) { t *= sites.op("Id", n);}
+  return t;
+}
+  
+/* Energy densities of a p-local Hamiltonian as list of tensors. Tries
+   to be reasonably symmetric, so more complicated than it could be. */
+
+template <class Tensor>
+std::vector<MPOt<Tensor>>
+energy_density(MPOt<Tensor> H, int p)
+{
+  int N = H.sites();
+  auto El = left_identity_environments(H);
+  auto Er = right_identity_environments(H);
+
+  auto eps = psite_components(H, p, El, Er);
+  for(int r = 1; r < p; r++) {
+    auto hp = psite_components(H, r, El, Er);
+
+    //j is vector index, not site index
+    for(int j = 0; j <= N-r; j++) {
+      for(int k = j; k <= k + p - r; k++) {
+	//Take my r-site operator. How many energy density terms is it split over?
+	int number_split = std::min(std::min(k+1, N-k), p-r+1);
+	eps[j] += embed(hp[k]/number_split, k + 1, k+r, j+1, j+r);
+      }
+    } 
+  }
+}
+	       
+
 #endif //#ifndef MPOKPM_UTIL
