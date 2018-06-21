@@ -60,13 +60,31 @@ int main(int argc, char **argv)
   int L = Tn.N();
   std::cout << "L " << L << "\n";
 
-  //this will depend on model
+  //this will depend on model.  maybe should put it in the returned
+  //tuple or otherwise in utils.cc (or later models.cc)
+  
   auto j_ampo = AutoMPO(Tn.sites());
-  for(int b = 1; b < L; ++b) {
+
+  if("xx" == model || "rfheis" == model) {
+    for(int b = 1; b < L; ++b) {
       auto coeff = im*0.5;
       j_ampo +=  coeff,"S+",b,"S-",b+1;
       j_ampo += -coeff,"S-",b,"S+",b+1;
+    }
   }
+  
+  if("2NJW" == model){
+    auto coeff = im; //factor of 2?
+    for(int b = 1; b < L; ++b) {
+      j_ampo +=  coeff,"S+",b,"S-",b+1;
+      j_ampo += -coeff,"S-",b,"S+",b+1;
+    }
+    for(int b = 1; b < L-1; ++b) {
+      j_ampo +=  coeff,"S+",b,"Sz",b+1,"S-",b+2;
+      j_ampo += -coeff,"S-",b,"Sz",b+1,"S+",b+2;
+    }
+  }
+  
   auto j = IQMPO(j_ampo);
 
   IQTensor mu = double_mu(Tn, Tn, j);
