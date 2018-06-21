@@ -172,6 +172,77 @@ entanglement_spectrum(MPOt<Tensor> psi, int b)
   return spectrum;
 }
 
+// compute overlap of Tn with op.
+
+template <class Tensor>
+Tensor
+single_mu(MPOt<Tensor> const& Tn,
+	  MPOt<Tensor> const& opp )
+{
+
+  //just a transpose
+  //first copy
+  MPOt<Tensor> op = opp;
+  //then change primelevels
+  op.mapprime(1,2);
+  op.mapprime(0,1);
+  op.mapprime(2,0);
+
+  int N = op.N();
+  assert(N == Tn.N());
+    
+  auto L = Tn.A(N) * op.A(N);
+  for(int i=N-1; i >= 1; --i) { L = L * Tn.A(i) * op.A(i); }
+  return L;
+}
+
+/* slight modification of overlap(psi, H,K, phi) from itensor mpo.cc.
+overlap is almost but not quite what I want: it doesn't get the prime
+level quite right, hence messes up the contractions.
+
+nominally computes a single coefficient mu = Tr[j Tn j Tm], but when
+applied to an algebra of Chebyshevs gives all the mu */
+
+template <class Tensor>
+Tensor
+double_mu(MPOt<Tensor> const& Tn,
+	  MPOt<Tensor> const& Tm,
+	  MPOt<Tensor> const& j)
+	  
+{
+  if(Tm.N() != Tn.N() || j.N() != Tn.N()) Error("Mismatched N in single_mu");
+  auto N = Tn.N();
+  auto Tndag = Tn;
+  
+  // I'm pretty sure this copies at least the indices (deduce this
+  // from the fact that Miles uses it in overlap, which one wouldn't
+  // expect to mess with the prime level of the input)
+  auto jp    = j;  
+  auto jpdag = j; //TODO this never actually gets daggered
+  
+  jp.mapprime(1,2);
+  jp.mapprime(0,1);
+
+  Tndag.mapprime(1,3);
+  Tndag.mapprime(0,2);
+
+  jpdag.mapprime(0,3);
+  jpdag.mapprime(1,0); 
+
+  //TODO start from right (so I'm not dragging a NxN matrix all the
+  //way across in the algebra case)
+  
+  //scales as m^2 k^2 d per Miles in mpo.cc. What in my case?
+  auto L = jpdag.A(N) * Tndag.A(N) * jp.A(N) * Tm.A(N);
+  for(int i = N-1; i >= 1; --i)
+    {
+      //scales as m^3 k^2 d + m^2 k^3 d^2. What in my case?
+      L = L * jpdag.A(i) * Tndag.A(i) * jp.A(i) * Tm.A(i);
+    }
+  //PrintData(L);
+  return L;
+}
+
 void write_singleKPM(IQTensor chtr,
 		     std::ofstream& chtrre_file,
 		     std::ofstream& chtrim_file)
