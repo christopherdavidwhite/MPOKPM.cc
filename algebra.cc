@@ -195,127 +195,110 @@ int nsweep )
 }
 
 
-/* L is a four-index guy: two dangler indices and two link indices
-   (should be the left link index at site jleft).
+/*
+  Compute tr[ Tn t1 Tn^{\dag} t2]
 
-   Assumes orthogonality center left of jleft + len(tens).
+  Returns a guy with two danngler indices.
 
-   Probably want tens to be std::vector<const &Tensor> or so: I find
-   it aesthetically displeasing to be copying tensors all over the
-   place like this. 
+  Assumes orthogonality center left of jleft + len(tens).
 */
-
 template<class Tensor>
-void
+Tensor
 correlation(MPOt<Tensor> const& Tn,
-	    Tensor const& E,
-	    int jleft,
-	    std::vector<Tensor> tens)
+	    int j1, int j2,
+	    Tensor t1, Tensor t2)
 {
-  int l = tens.size();
-  int jend = jleft + l;
-  assert(Tn.orthoCenter() <= j + l);
+  auto sites = Tn.sites(); 
+  
+  assert(Tn.orthoCenter() <= std::min(j1,j2) + 1);
+  int jleft  = std::min(j1,j2);
+  int jright = std::max(j1,j2);
 
-  //index linking i to i+1:
-  auto ir = commonIndex(Tn.A(jend),Tn.A(jend+1),Link);
+  Tensor C;
   
-  auto C = Tn.A(jend)*tens(l-1)*dag(prime(Tn.A(jend),Site,ir));
+  Tensor TAdag;
+  Tensor tf, ts;
+
+  //rightmost site
+  if (j1 == j2)    { tf = t1;                    ts = t2; }
+  else if(j1 < j2) { tf = sites.op("Id",jright); ts = t2; }
+  else if(j2 < j1) { tf = t1;                    ts = sites.op("Id",jright); }
+
+  TAdag = dag(Tn.A(jright));
+  TAdag = swapPrime(TAdag, 0,1,Site);
+  if(jright == 1) { TAdag.prime(Dangler); }
+  else            { TAdag.prime(leftLinkInd(Tn,jright)); }
   
-  /* n counts leftwards. Already did n=0 just above. */
-  for(int n = 1; n < l; n++){
-    auto t = tens[l - n];
-    C *= Tn.A(jleft + l -n);
-    C *= t;
-    C *= dag(prime(Tn.A(jleft + l - n),Link));
+  C = Tn.A(jright);
+  C *= prime(tf);
+  C.mapprime(2,1,Site);
+  C *= prime(TAdag, Site);
+  C.mapprime(3,1, Site);
+  C *= mapprime(dag(ts), 1,2);
+
+  if (j1 == j2) { return C; }
+  //between the two sites
+  if(std::abs(j1 - j2) > 1) {
+    for(int k = jright-1; k > jleft; k--){
+      C *= Tn.A(k);
+      C *= prime(dag(Tn.A(k)), Link);
+    }
   }
 
-  return E * C ;
+  if(j1 < j2)      { tf = t1;                   ts = sites.op("Id",jleft); }
+  else if(j2 < j1) { tf = sites.op("Id",jleft); ts = t2; }
+
+  TAdag = dag(Tn.A(jleft));
+  TAdag = swapPrime(TAdag, 0,1,Site);
+  if(jleft == 1) { TAdag.prime(Dangler); }
+  else           { TAdag.prime(leftLinkInd(Tn,jleft)); }
+
+  C *= Tn.A(jleft);
+  C *= prime(tf);
+  C.mapprime(2,1,Site);
+  C *= prime(TAdag);
+  C.mapprime(3,1, Site);
+  C *= mapprime(dag(ts), 1,2);
+  C.mapprime(2,1);
+  assert(2==C.r());
+  return C ;
 }
 
 template<class Tensor>
 std::vector<std::vector<Tensor>>
 twopoint_correlation(MPOt<Tensor> const& Tn,
-		     std::vector<std::string> q1,
-		     std::vector<std::string> q2)
+		     std::string q1,
+		     std::string q2)
 {
   assert(Tn.orthoCenter() == 1);
   int N = Tn.N();
   
   auto sites = Tn.sites();
-  int p1 = q1.size();
-  int p2 = q2.size();
+  Tensor E; 
+  std::vector<std::vector<Tensor>> correlations(N, std::vector<Tensor>(N));
 
-  std::vector<std::vector<Tensor>> correlations;
+  for(int jleft = 1; jleft <= N; jleft++) {
+    for(int jright = jleft; jright <= N; jright++) {
+      /*does twice as much as it has to for jleft=jright*/
+      
+      int j1, j2;
+      Tensor C;
+      j1 = jleft; j2 = jright;
+      C = correlation(Tn, j1, j2, sites.op(q1,j1), sites.op(q2,j2));
+      if(jleft != 1) { C *= E; }
+      correlations[j1-1][j2-1] = C;
 
-  /* slightly strange because jleft is a site, which is 1-indexed, but
-     my output matrix is 0-indexed */
-
-  auto i = findtype(Tn.A(1), Dangler);
-  Tensor E = diag(prime(i), dag(i)) * prime(diag(prime(i),dag(i)));
-  
-  for(int jleft = 1; jleft <= N-fmax(p1,p2); jleft++) {
-    for(int jright = 1; jright <= N-fmin(p1,p2); jright++) {
-      for(int order = 0 ; order <= 1; order++) {
-	std::vector<Tensor> tens;
-	
-	//for scoping
-	int pleft, pright;
-	std::vector<std::string> qleft, qright;
-	if(0 == order) {
-	  pleft  = p1;
-	  pright = p2;
-	  qleft  = q1;
-	  qright = q2;
-	} else if(1 == order) {
-	  pleft  = p2;
-	  pright = p1;
-	  qleft  = q2;
-	  qright = q1;
-	} else {
-	  Error("twopoint_correlation bad order");
-	}
-
-	/* if the two operators overlap, multiply them.
-	   Some redundancy with non-overlap case, but I don't feel
-	   compelled to be clever
-	*/
-	
-	if(jright >= jleft + pleft - 1) {
-	  
-	  //bit that's just qleft
-	  for(int k = jleft; k < jright; k++)
-	    { tens.push_back(sites.Op(qleft[k-jleft], k)); }
-	  
-	  //overlap
-	  for(int k = jright; k < jleft + pleft; k++) {
-	    auto t = sites.Op(qleft[k-jleft], k);
-	    t *= sites.Op(qright[k - jright], k);
-	    t.mapprime(2, 1, Site);
-	    tens.push_back(t);
-	  }
-	  
-	  //bit that's just qright
-	  for(int k = jright; k <= jright + pright - 1; k++) 
-	    { tens.push_back(sites.Op(qright[k-jright], k)); }
-	  
-	} else {
-
-	  //case where strings don't overlap
-	  
-	  for(int k = jleft; k < jleft + pleft; k++)
-	    { tens.push_back(sites.op(qleft[k-jleft], k)); }
-	  
-	  for(int k = jleft + pleft; k < jright; k++)
-	    { tens.push_back(sites.op("Id", k)); }
-	  
-	  for(int k = jright; k <= jright + pleft - 1; k++)
-	    { tens.push_back(sites.op(qright[k-jright], k)); }
-	} 	
-	correlations[jright-1].push_back(correlation(Tn, E, jleft, tens));
-      }//order
-    } //jright
-    //Update the left environment tensor
-    E *= Tn.A(jleft)*prime(Tn.A(jleft));
+      j1 = jright; j2 = jleft;
+      C = correlation(Tn, j1, j2, sites.op(q1,j1), sites.op(q2,j2));
+      if(jleft != 1) {C *= E;}
+      correlations[j1-1][j2-1] = C;
+    }
+    auto TAdag = dag(Tn.A(jleft));
+    TAdag.prime(Dangler);
+    TAdag.prime(Link);
+    if (1 == jleft) { E  = Tn.A(jleft)*TAdag; }
+    //suboptimal contraction ordering
+    else            { E *= Tn.A(jleft)*TAdag; }
   } //jleft
   
   return correlations;
