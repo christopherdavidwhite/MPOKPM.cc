@@ -266,13 +266,12 @@ write_doubleKPM(IQTensor mu,
 		std::ofstream& imagmu_file )
 { 
   if (2 != rank(mu)) Error("write_doubleKPM: mu has wrong rank");
-  
+
   IQIndex i1;
   IQIndex i2;
   i1 = mu.inds()[0];
   i2 = mu.inds()[1];
   int N = i1.m();
-  std::cout << "write_doubleKPM " << N << "\n";
   if (i2.m() != N) Error("write_doubleKPM: mu not square");
   
   std::vector<std::vector<std::complex<double>>> vecmu;
@@ -382,7 +381,7 @@ right_identity_environments(MPOt<Tensor> H)
 }
 
 /* Partial traces down to each contiguous p-site region, with factors
-   of 1/2 */
+   of 1/2 . Represented as MPOs on whole system. */
 template <class Tensor>
 std::vector<MPOt<Tensor>>
 psite_components(MPOt<Tensor> H, int p,
@@ -390,8 +389,6 @@ psite_components(MPOt<Tensor> H, int p,
 		 std::vector<Tensor> Er)
 {
 
-  //sanity check
-  if(10 < p){Error("Dangerously large p in psite_components");}
   int N = H.N();
   std::vector<Tensor> cpts;
 
