@@ -96,7 +96,6 @@ function check_dos_trace(H, ifn, ofn, L)
     N = length(trTncc)
     close(tnf)
     d,v = H |> full |> eig
-    @show d
     trTned = zeros(N)
     for n = 1:N
         trTned[n] = sum(cos.((n-1)*acos.(d)))
@@ -121,6 +120,8 @@ function check_conductivity(H, j, ifn,ofn,L)
 
     diff = 2.0^(-2L)*μed - μcc
     vmax = abs.(diff) |> maximum
+    @show μcc
+    @show 2.0^(-2L)*μed
     pcolor(diff, cmap="seismic", vmin=-vmax, vmax=vmax)
     savefig("$ofn-plt-trTnjTmjerr.pdf", bbox_inches="tight")
     cla()
@@ -197,7 +198,8 @@ function main(args)
             j = imag(sum([2*(Y[l]*X[l+1] - X[l]*Y[l+1]) for l in 1:L-1]) |> full)
         elseif "2NJW" == model
             H = rf_2NJW(hz)
-            j = imag(sum([2*(Y[l]*X[l+1] - X[l]*Y[l+1]) for l in 1:L-1]) |> full) #incorrect
+            j =  imag(sum([2*(Y[l]*X[l+1] - X[l]*Y[l+1]) for l in 1:L-1]) |> full) 
+            j += imag(sum([1*(Y[l]*Z[l+1]X[l+2] - X[l]*Z[l+1]*Y[l+2]) for l in 1:L-2]) |> full) 
         else
             error("Bad model $model")
         end
