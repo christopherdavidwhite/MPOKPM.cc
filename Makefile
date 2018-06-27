@@ -33,7 +33,7 @@ construct-algebra: construct-algebra.o $(OBJFILES) $(HFILES)
 	$(CCCOM) $(CCFLAGS) $< $(OBJFILES) -o $@ $(LIBFLAGS) -lpthread
 
 clean:
-	rm -fr .debug_objs *.o *-g *.ps conductivity dos construct-algebra
+	rm -fr .debug_objs *.o *-g *.ps conductivity dos construct-algebra twopoint-correlation
 
 #parameters for verification
 vL=6
