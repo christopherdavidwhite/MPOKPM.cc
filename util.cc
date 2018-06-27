@@ -290,8 +290,12 @@ write_doubleKPM(IQTensor mu,
   for(int n = 1; n <= N; n++){
     for(int m = 1; m <= N; m++){
       vecmu[n-1][m-1] = mu.cplx(i1(n),i2(m));
-      realmu_file << real(mu.cplx(i1(n), i2(m))) << " " << std::flush;  
+      realmu_file << real(mu.cplx(i1(n), i2(m)))  << std::flush;
       imagmu_file << imag(mu.cplx(i1(n), i2(m))) << " " << std::flush;  
+      if (m < N) {
+	realmu_file << " ";
+	imagmu_file << " ";
+      }
     }
     if (n < N) {
       realmu_file << "\n";
