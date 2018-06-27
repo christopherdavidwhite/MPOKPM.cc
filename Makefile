@@ -7,10 +7,13 @@ ifndef JULIA
 JULIA=julia
 endif
 
-
 include $(LIBRARY_DIR)/this_dir.mk
 include $(LIBRARY_DIR)/options.mk
 
+ifdef DEBUG
+LIBFLAGS=$(LIBGFLAGS)
+CCFLAGS=$(CCGFLAGS)
+endif
 .PHONY: all
 all: construct-algebra conductivity dos twopoint-correlation
 
