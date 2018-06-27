@@ -4,6 +4,7 @@
 #include "itensor/mps/sites/spinhalf.h"
 #include "itensor/decomp.h"
 #include "globals.h"
+#include "util.h"
 
 #ifndef MPOKPM_UTIL
 #define MPOKPM_UTIL
@@ -27,6 +28,8 @@ full(MPOt<Tensor> B)
   for(int i = 2; i < B.N(); i++) { L = L*B.A(i); }
   return L;
 }
+
+template IQTensor full(MPOt<IQTensor> B);
 
 std::tuple<IQMPO,std::vector<double>, double>
 XX(SiteSet sites, double hz, std::default_random_engine e)
@@ -172,6 +175,8 @@ entanglement_spectrum(MPOt<Tensor> psi, int b)
   return spectrum;
 }
 
+template Spectrum entanglement_spectrum(MPOt<IQTensor> psi, int b);
+
 // compute overlap of Tn with op.
 
 template <class Tensor>
@@ -196,6 +201,8 @@ single_mu(MPOt<Tensor> const& Tn,
   return L;
 }
 
+template IQTensor single_mu(MPOt<IQTensor> const& Tn, MPOt<IQTensor> const& opp);
+
 /* slight modification of overlap(psi, H,K, phi) from itensor mpo.cc.
 overlap is almost but not quite what I want: it doesn't get the prime
 level quite right, hence messes up the contractions.
@@ -208,7 +215,6 @@ Tensor
 double_mu(MPOt<Tensor> const& Tn,
 	  MPOt<Tensor> const& Tm,
 	  MPOt<Tensor> const& j)
-	  
 {
   if(Tm.N() != Tn.N() || j.N() != Tn.N()) Error("Mismatched N in single_mu");
   auto N = Tn.N();
@@ -242,6 +248,8 @@ double_mu(MPOt<Tensor> const& Tn,
   //PrintData(L);
   return L;
 }
+
+template IQTensor double_mu(MPOt<IQTensor> const& Tn, MPOt<IQTensor> const& Tm, MPOt<IQTensor> const& opp);
 
 void write_singleKPM(IQTensor chtr,
 		     std::ofstream& chtrre_file,
@@ -359,6 +367,7 @@ left_identity_environments(MPOt<Tensor> H)
   return El;
 }
 
+
 template <class Tensor>
 std::vector<MPOt<Tensor>>
 right_identity_environments(MPOt<Tensor> H)
@@ -438,7 +447,7 @@ template <class Tensor>
 std::vector<MPOt<Tensor>>
 energy_density(MPOt<Tensor> H, int p)
 {
-  int N = H.sites();
+  int N = H.N();
   auto El = left_identity_environments(H);
   auto Er = right_identity_environments(H);
 
@@ -456,6 +465,5 @@ energy_density(MPOt<Tensor> H, int p)
     } 
   }
 }
-	       
 
 #endif //#ifndef MPOKPM_UTIL
