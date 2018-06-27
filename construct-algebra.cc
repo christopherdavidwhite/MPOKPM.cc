@@ -40,7 +40,6 @@ int main(int argc, char **argv)
   double hz = 1.0;
   double cutoff = 1e-14;
   double Q = 1;
-  bool profligate = false; //use memory-profligate strategy?
   std::string filename = "/tmp/conductivity";
   std::string model = "rfheis";
 
