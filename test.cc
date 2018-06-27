@@ -7,8 +7,8 @@
 #include <tgmath.h>
 #define TESTING true
  
-#include "chebyshev.cc"
-#include "util.cc"
+#include "chebyshev.h"
+#include "util.h"
 
 
 namespace {
