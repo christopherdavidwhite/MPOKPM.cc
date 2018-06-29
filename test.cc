@@ -73,27 +73,27 @@ TEST_F(ConductivityTest, RandomParamagnetMu) {
   
   IQIndex i1 = mu.inds()[0];
   IQIndex i2 = mu.inds()[1];
-  
+
   double mu00 = pow(ups,2) * pow(2, -1) * (L-1);
   double mu02 = pow(ups,2) * pow(2, -1) * ((L-1) * (2*shzl2 - 1) - 4*shzlhzlp1);
 
   //note that mu00 has the 2^-L I put in the conductivity calculation
   EXPECT_NEAR(double_mu(I,I,j).real(), pow(2, L)* mu00 , 1e-10);
-  std::cout << real(mu.cplx(i1(0), i2(0)));  
-  EXPECT_NEAR(real(mu.cplx(i1(0), i2(0))), mu00, 1e-10);
-  EXPECT_NEAR(imag(mu.cplx(i1(0),i2(0))), 0, 1e-10);
+  std::cout << real(mu.cplx(i1(0+1), i2(0+1)));  
+  EXPECT_NEAR(real(mu.cplx(i1(0+1), i2(0+1))), mu00, 1e-10);
+  EXPECT_NEAR(imag(mu.cplx(i1(0+1),i2(0+1))), 0, 1e-10);
   
-  EXPECT_NEAR(real(mu.cplx(i1(0),i2(1))), 0, 1e-10);
-  EXPECT_NEAR(imag(mu.cplx(i1(0),i2(1))), 0, 1e-10);
+  EXPECT_NEAR(real(mu.cplx(i1(0+1),i2(1+1))), 0, 1e-10);
+  EXPECT_NEAR(imag(mu.cplx(i1(0+1),i2(1+1))), 0, 1e-10);
   
-  EXPECT_NEAR(real(mu.cplx(i1(1),i2(0))), 0, 1e-10);
-  EXPECT_NEAR(imag(mu.cplx(i1(1),i2(0))), 0, 1e-10);
+  EXPECT_NEAR(real(mu.cplx(i1(1+1),i2(0+1))), 0, 1e-10);
+  EXPECT_NEAR(imag(mu.cplx(i1(1+1),i2(0+1))), 0, 1e-10);
   
-  EXPECT_NEAR(real(mu.cplx(i1(0),i2(2))), mu02, 1e-10);
-  EXPECT_NEAR(imag(mu.cplx(i1(0),i2(2))), 0, 1e-10);
+  EXPECT_NEAR(real(mu.cplx(i1(0+1),i2(2+1))), mu02, 1e-10);
+  EXPECT_NEAR(imag(mu.cplx(i1(0+1),i2(2+1))), 0, 1e-10);
 
-  EXPECT_NEAR(real(mu.cplx(i1(2),i2(0))), mu02, 1e-10);
-  EXPECT_NEAR(imag(mu.cplx(i1(2),i2(0))), 0, 1e-10);
+  EXPECT_NEAR(real(mu.cplx(i1(2+1),i2(0+1))), mu02, 1e-10);
+  EXPECT_NEAR(imag(mu.cplx(i1(2+1),i2(0+1))), 0, 1e-10);
 }
 
 
