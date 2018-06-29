@@ -7,7 +7,7 @@
 #include <tgmath.h>
 #define TESTING true
  
-#include "chebyshev.h"
+#include "chebyshev.cc"
 #include "util.h"
 
 
@@ -56,14 +56,6 @@ TEST_F(ConductivityTest, RandomParamagnetMu) {
 
   std::string filename = "conductivity.test";
   double cutoff=1e-14;
-  OPENE(filename + ".re",  realmu_file);
-  OPENE(filename + ".im",  imagmu_file);
-  OPENE(filename + ".dis", disout_file);
-  OPENE(filename + ".tim", timing_file);
-  OPENE(filename + ".chs", chsing_file);
-  OPENE(filename + ".chM", chebbd_file);
-  OPENE(filename + ".chtrre", chtrre_file);
-  OPENE(filename + ".chtrim", chtrim_file);
   
   int Maxm   = 1000;
   int N      = 4;
@@ -74,28 +66,34 @@ TEST_F(ConductivityTest, RandomParamagnetMu) {
 
   std::cout << "shzl2 " << shzl2 << "\n";
   std::cout << "shzlhzlp1 " << shzlhzlp1 << "\n";
-  auto mu = all_double_mu(random_paramagnet, j, realmu_file, imagmu_file, chebbd_file, chsing_file, chtrre_file, chtrim_file,  N, Maxm, cutoff, 1);
+  auto cheb = listandwrite_dangler(random_paramagnet, filename, N, Maxm, cutoff, true, 4, 16);
+  auto mu = double_mu(cheb, cheb, j);
+  
+  ASSERT_EQ(mu.r(), 2);
+  
+  IQIndex i1 = mu.inds()[0];
+  IQIndex i2 = mu.inds()[1];
+  
   double mu00 = pow(ups,2) * pow(2, -1) * (L-1);
   double mu02 = pow(ups,2) * pow(2, -1) * ((L-1) * (2*shzl2 - 1) - 4*shzlhzlp1);
 
   //note that mu00 has the 2^-L I put in the conductivity calculation
-  EXPECT_NEAR(real(double_mu(I,I,j)), pow(2, L)* mu00 , 1e-10);
-  EXPECT_NEAR(imag(double_mu(I,I,j)), 0, 1e-10);
+  EXPECT_NEAR(double_mu(I,I,j).real(), pow(2, L)* mu00 , 1e-10);
+  std::cout << real(mu.cplx(i1(0), i2(0)));  
+  EXPECT_NEAR(real(mu.cplx(i1(0), i2(0))), mu00, 1e-10);
+  EXPECT_NEAR(imag(mu.cplx(i1(0),i2(0))), 0, 1e-10);
   
-  EXPECT_NEAR(real(mu[0][0]), mu00, 1e-10);
-  EXPECT_NEAR(imag(mu[0][0]), 0, 1e-10);
+  EXPECT_NEAR(real(mu.cplx(i1(0),i2(1))), 0, 1e-10);
+  EXPECT_NEAR(imag(mu.cplx(i1(0),i2(1))), 0, 1e-10);
   
-  EXPECT_NEAR(real(mu[0][1]), 0, 1e-10);
-  EXPECT_NEAR(imag(mu[0][1]), 0, 1e-10);
+  EXPECT_NEAR(real(mu.cplx(i1(1),i2(0))), 0, 1e-10);
+  EXPECT_NEAR(imag(mu.cplx(i1(1),i2(0))), 0, 1e-10);
   
-  EXPECT_NEAR(real(mu[1][0]), 0, 1e-10);
-  EXPECT_NEAR(imag(mu[1][0]), 0, 1e-10);
-  
-  EXPECT_NEAR(real(mu[0][2]), mu02, 1e-10);
-  EXPECT_NEAR(imag(mu[0][2]), 0, 1e-10);
+  EXPECT_NEAR(real(mu.cplx(i1(0),i2(2))), mu02, 1e-10);
+  EXPECT_NEAR(imag(mu.cplx(i1(0),i2(2))), 0, 1e-10);
 
-  EXPECT_NEAR(real(mu[2][0]), mu02, 1e-10);
-  EXPECT_NEAR(imag(mu[2][0]), 0, 1e-10);
+  EXPECT_NEAR(real(mu.cplx(i1(2),i2(0))), mu02, 1e-10);
+  EXPECT_NEAR(imag(mu.cplx(i1(2),i2(0))), 0, 1e-10);
 }
 
 
