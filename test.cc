@@ -79,7 +79,6 @@ TEST_F(ConductivityTest, RandomParamagnetMu) {
 
   //note that mu00 has the 2^-L I put in the conductivity calculation
   EXPECT_NEAR(double_mu(I,I,j).real(), pow(2, L)* mu00 , 1e-10);
-  std::cout << real(mu.cplx(i1(0+1), i2(0+1)));  
   EXPECT_NEAR(real(mu.cplx(i1(0+1), i2(0+1))), mu00, 1e-10);
   EXPECT_NEAR(imag(mu.cplx(i1(0+1),i2(0+1))), 0, 1e-10);
   
