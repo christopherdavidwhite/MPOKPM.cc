@@ -11,6 +11,7 @@ include $(LIBRARY_DIR)/this_dir.mk
 include $(LIBRARY_DIR)/options.mk
 
 ifdef DEBUG
+$(info DEBUG)
 LIBFLAGS=$(LIBGFLAGS)
 CCFLAGS=$(CCGFLAGS)
 endif
