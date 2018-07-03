@@ -20,7 +20,6 @@
 #include <getopt.h>
 
 #include "runtime-check.h"
-#include "chebyshev.h"
 #include "globals.h"
 #include "util.h"
 		
