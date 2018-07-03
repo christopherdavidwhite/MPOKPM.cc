@@ -41,8 +41,11 @@ dos: dos.o $(OBJFILES) $(HFILES)
 construct-algebra: construct-algebra.o $(OBJFILES) $(HFILES)
 	$(CCCOM) $(CCFLAGS) $< $(OBJFILES) -o $@ $(LIBFLAGS) -lpthread
 
+scratch: scratch.o  $(OBJFILES) $(HFILES)
+	$(CCCOM) $(CCFLAGS) $< $(OBJFILES) -o $@ $(LIBFLAGS) -lpthread
+
 clean:
-	rm -fr .debug_objs *.o *-g *.ps conductivity dos construct-algebra twopoint-correlation
+	rm -fr .debug_objs *.o *-g *.ps conductivity dos construct-algebra twopoint-correlation scratch test
 
 #parameters for verification
 vL=16
