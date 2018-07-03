@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 
+#include "algebra.cc"
 #include "runtime-check.h"
 #include "globals.h"
 #include "util.h"
