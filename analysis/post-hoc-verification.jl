@@ -1,10 +1,7 @@
 ###print
 
 using ArgParse
-using PyPlot
-using PyCall
-@pyimport seaborn as sns
-sns.set_style("whitegrid")
+using HDF5
 
 
 function pauli_matrices_sparse(L :: Int64)
@@ -100,16 +97,10 @@ function check_dos_trace(H, ifn, ofn, L)
     for n = 1:N
         trTned[n] = sum(cos.((n-1)*acos.(d)))
     end
-    @show trTned
-    @show trTncc
+    #@show trTned
+    #@show trTncc
     trTndiff = trTned - trTncc
     @show abs.(trTndiff) |> maximum
-    semilogy(abs.(trTned - trTncc), ".")
-    xlabel("n", size=20)
-    ylabel("err in trace Tn",size=20)
-    savefig("$ofn-plt-trTnerr.pdf", bbox_inches="tight")
-    cla()
-    clf()
 end
 
 
@@ -120,21 +111,30 @@ function check_conductivity(H, j, ifn,ofn,L)
 
     diff = 2.0^(-2L)*μed - μcc
     vmax = abs.(diff) |> maximum
-    @show μcc
-    @show 2.0^(-2L)*μed
-    pcolor(diff, cmap="seismic", vmin=-vmax, vmax=vmax)
-    savefig("$ofn-plt-trTnjTmjerr.pdf", bbox_inches="tight")
-    cla()
-    clf()
-        
+    #@show μcc
+    #@show 2.0^(-2L)*μed
     #@show μed
     #@show μcc
     @show abs.(diff) |> maximum 
-end 
+end
 
-PyDict(pyimport("matplotlib")["rcParams"])["xtick.labelsize"] = 20
-PyDict(pyimport("matplotlib")["rcParams"])["ytick.labelsize"] = 20
-PyPlot.rc("text", usetex=true)
+function check_Sz_correlation(H, ifn, L)
+    X,Y,Z,P,M = pauli_matrices_sparse(L)
+    Z = map(full, Z)
+    μcc = h5read("$(ifn)SzSz.h5", "/tensor")
+    N = size(μcc, 2)
+    #for j1 = 1:L
+    #    for j2 = 1:L
+    j1 = 1
+    j2 = 1
+    μed = correlation(H, 0.5*Z[j1], 0.5*Z[j2], N)
+    #diff = 2.0^(-L)*μed - μcc[j1, :, j2, :]
+    diff = 2.0^(-L)*μed - μcc[:, :]
+
+    #@show μcc[j1, :, j2, :]
+    @show j1, j2, abs.(diff) |> maximum
+end
+    
 
 s = ArgParseSettings()
 @add_arg_table s begin
@@ -155,43 +155,15 @@ function main(args)
     ofn = O["o"]
     model = O["m"]
 
-    #plot bond dim. as fn of chebyshev order
-    nM = readdlm("$ifn.chM")
-    semilogy(nM[:,1], nM[:,2], ".")
-    xlabel("Chebyshev order \$n\$", size=20)
-    ylabel("bond dimension M", size=20)
-    savefig("$ofn-plt-chM.pdf", bbox_inches="tight")
-
-    #plot sing. vals. of every fourth Chebyshev
-
-
-    # f = open("$ifn.chs")
-    # for (n, ln) in enumerate(eachline(f))
-    #     if n % 4 == 1
-    #         semilogy([parse(Float64, s) for s in split(ln)], ".-", label="n=$n")
-    #     end
-    # end
-    # close(f)
-    # legend()
-    # ylabel("Singular value \$s_j\$", size=20)
-    # xlabel("Index \$j\$", size=20)
-    # xlim(0,520)
-    
-    # savefig("$ofn-plt-chs.pdf", bbox_inches="tight")
-    # cla()
-    # clf()
-
     hzf = open("$ifn.dis")
     hz = [parse(Float64, s) for s in split(readline(hzf))]
     L = length(hz)
-    H = rfheis(hz)
     close(hzf)
-    L = length(hz)
     if L >= 14
         println("L = $L >= 14: skipping ED check")
     else
-        #@show trace(H^2)
-
+        @show trace(H^2)
+        
         X,Y,Z,P,M = pauli_matrices_sparse(L)
         if "rfheis" == model
             H = rfheis(hz)
