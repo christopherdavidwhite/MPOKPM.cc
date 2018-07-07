@@ -1,29 +1,52 @@
 #include "itensor/mps/autompo.h"
 #include "itensor/mps/sites/spinhalf.h"
 #include "itensor/decomp.h"
+#include "util.h"
 
 #ifndef MPOKPM_ALGEBRA
 #define MPOKPM_ALGEBRA
 using namespace itensor;
 
 const auto Dangler = IndexType("Dangler");
-template <class Tensor>
-MPOt<Tensor>
-oplus(MPOt<Tensor> A, MPOt<Tensor> B)
+
+/* This is fundamentally broken: nominally uses IQ tensors, but
+   doesn't even try to do the right thing wrt any nontrivial
+   conservation. */
+IQMPO
+oplus(IQMPO A, IQMPO B)
 {
   auto out = A;
   auto Bp = B;
+
+  /* slightly obtuse: if either doesn't have a dangler index, add a
+     trivial one, then proceed on the assumption that it does. */
+  if (!findtype(out.A(1), Dangler)) {
+    //add dangler index to A
+    auto i1 = IQIndex("iq", Index("i",1, Dangler, 0), QN(0));
+    auto S1 = setElt(i1(1));
+    out.setA(1, out.A(1)*S1);
+  }
+
+  if (!findtype(Bp.A(1), Dangler)) {
+    //add dangler index to B
+    auto i2 = IQIndex("iq", Index("i",1, Dangler, 0), QN(0));
+    auto S2 = setElt(i2(1));
+    Bp.setA(1, Bp.A(1)*S2);
+  }
+
+  IQIndex iA = findtype(out.A(1), Dangler).dag();
+  IQIndex iB = findtype(Bp.A(1), Dangler).dag();
+  IQIndex iout = IQIndex("iq", Index("iout", iA.m() + iB.m(), Dangler, 0), QN(0));
+
+  IQTensor Acap = IQTensor(iout, iA);
+  for(int l = 1; l <= iA.m(); l++) { Acap.set(iout(l), iA(l), 1.0); }
   
-  //dangler index
-  auto i = IQIndex("iq", Index("i",2, Dangler, 0), QN(0));
-  
-  //add dangler index to A
-  auto S1 = setElt(i(1));
-  out.setA(1, out.A(1)*S1);
-  
-  //add dangler index to B
-  auto S2 = setElt(i(2));
-  Bp.setA(1, Bp.A(1)*S2);
+  IQTensor Bcap = IQTensor(iout, iB);
+  for(int l = 1; l <= iB.m(); l++) { Bcap.set(iout(iA.m() + l), iB(l), 1.0); }
+  out.setA(1,Acap*out.A(1));
+  Bp.setA(1, Bcap*Bp.A(1));
+
+  std::cout << std::flush;
   
   //add for {A, B}
   out.plusEq(Bp);
