@@ -52,9 +52,8 @@ clean:
 	rm -fr .debug_objs *.o *-g *.ps conductivity dos construct-algebra twopoint-correlation scratch test
 
 #parameters for verification
-vL=16
-#vN=30
-vN = 16
+vL=8
+vN=4
 vM=512
 VDIR=verification-$(DATE)-$(COMMIT)
 vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)

@@ -76,10 +76,12 @@ int main(int argc, char **argv)
     for(int i2 = 0; i2 < quantities.size(); i2++) {
       std::string q2 = quantities[i2];
       std::string filename = output_filename + q1 + q2 + ".h5";
-      
-      //std::vector<std::vector<Tensor>> mu;
       auto mu = twopoint_correlation(Tn, q1, q2);
-
+      
+      /* there's some crazy-strange cacheing (?) bug here. If I don't
+	 do this, mu's .store() doesn't get updated (?!) */
+      mu.set(2,2, mu.real(2,2));//mu.cplx(2,2,2,2));
+      
       export_hdf5(mu, filename);
     }
   }

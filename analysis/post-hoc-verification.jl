@@ -39,7 +39,6 @@ function exact_μ{T}(H :: Array{T,2}, j :: Array{Float64,2}, N :: Int)
     jv1 = zeros(2,2)
     v = zeros(2,2)
     gc()
-    println("start loop")
     for n in 1:N
         TnH = cos.((n-1)*acos.(d))
         TnHjvT = transpose(TnH .* jv)
@@ -48,6 +47,26 @@ function exact_μ{T}(H :: Array{T,2}, j :: Array{Float64,2}, N :: Int)
             μ[n,m] = μ[m,n]= vecdot(TnHjvT, (TmH .* jv))
         end
         TnHjvT = zeros(2,2)
+        gc()
+    end
+    return μ
+end
+
+function correlation{T}(H :: Array{T,2}, A :: Array{Float64,2}, B :: Array{Float64,2}, N :: Int)
+    μ = zeros(N,N)
+    @time d,v = eig(H)
+    H = zeros((2,2))
+    gc()
+
+    Av = v'*A*v
+    Bv = v'*B*v
+    
+    for n in 1:N
+        TnH = diagm(cos.((n-1)*acos.(d)))
+        for m in n:N
+            TmH = diagm(cos.((m-1)*acos.(d)))
+            μ[n,m] = μ[m,n]= trace(TnH*Av*TmH*Bv)
+        end
         gc()
     end
     return μ
@@ -162,7 +181,6 @@ function main(args)
     if L >= 14
         println("L = $L >= 14: skipping ED check")
     else
-        @show trace(H^2)
         
         X,Y,Z,P,M = pauli_matrices_sparse(L)
         if "rfheis" == model
@@ -175,8 +193,10 @@ function main(args)
         else
             error("Bad model $model")
         end
+        @show trace(H^2)
         check_dos_trace(H, ifn, ofn, L)
         check_conductivity(H, j, ifn, ofn, L)
+        check_Sz_correlation(H, ifn, L)
         #check conductivity coeffs
     end
 end
