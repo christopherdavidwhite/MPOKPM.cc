@@ -207,7 +207,7 @@ template IQTensor single_mu(MPOt<IQTensor> const& Tn, MPOt<IQTensor> const& opp)
 overlap is almost but not quite what I want: it doesn't get the prime
 level quite right, hence messes up the contractions.
 
-nominally computes a single coefficient mu = Tr[j Tn j Tm], but when
+nominally computes a single coefficient mu = Tr[j1 Tn j2 Tm], but when
 applied to an algebra of Chebyshevs gives all the mu */
 
 template <class Tensor>
@@ -215,41 +215,35 @@ Tensor
 double_mu(MPOt<Tensor> const& Tn,
 	  MPOt<Tensor> const& Tm,
 	  MPOt<Tensor> const& j)
+{ return double_mu(Tn, j, Tm, j); }
+
+template IQTensor double_mu(MPOt<IQTensor> const& Tn, MPOt<IQTensor> const& Tm, MPOt<IQTensor> const& j);
+
+  
+template <class Tensor>
+Tensor
+double_mu(MPOt<Tensor> Tn,
+	  MPOt<Tensor> j1,
+	  MPOt<Tensor> Tm,
+	  MPOt<Tensor> j2)
 {
-  if(Tm.N() != Tn.N() || j.N() != Tn.N()) Error("Mismatched N in single_mu");
+  if(Tm.N() != Tn.N() || j1.N() != Tn.N() || j2.N() != Tn.N())
+    { Error("Mismatched N in double_mu"); }
   auto N = Tn.N();
-  auto Tndag = Tn;
   
-  // I'm pretty sure this copies at least the indices (deduce this
-  // from the fact that Miles uses it in overlap, which one wouldn't
-  // expect to mess with the prime level of the input)
-  auto jp    = j;  
-  auto jpdag = j; //TODO this never actually gets daggered
-  
-  jp.mapprime(1,2);
-  jp.mapprime(0,1);
+  j1.mapprime(1,2);
+  j1.mapprime(0,1);
 
-  Tndag.mapprime(1,3);
-  Tndag.mapprime(0,2);
+  Tn.mapprime(1,3);
+  Tn.mapprime(0,2);
 
-  jpdag.mapprime(0,3);
-  jpdag.mapprime(1,0); 
+  j2.mapprime(0,3);
+  j2.mapprime(1,0); 
 
-  //TODO start from right (so I'm not dragging a NxN matrix all the
-  //way across in the algebra case)
-  
-  //scales as m^2 k^2 d per Miles in mpo.cc. What in my case?
-  auto L = jpdag.A(N) * Tndag.A(N) * jp.A(N) * Tm.A(N);
-  for(int i = N-1; i >= 1; --i)
-    {
-      //scales as m^3 k^2 d + m^2 k^3 d^2. What in my case?
-      L = L * jpdag.A(i) * Tndag.A(i) * jp.A(i) * Tm.A(i);
-    }
-  //PrintData(L);
+  auto L = j1.A(N) * Tn.A(N) * j2.A(N) * Tm.A(N);
+  for(int i = N-1; i >= 1; --i) { L = L * j1.A(i) * Tn.A(i) * j2.A(i) * Tm.A(i); }
   return L;
 }
-
-template IQTensor double_mu(MPOt<IQTensor> const& Tn, MPOt<IQTensor> const& Tm, MPOt<IQTensor> const& opp);
 
 void write_singleKPM(IQTensor chtr,
 		     std::ofstream& chtrre_file,

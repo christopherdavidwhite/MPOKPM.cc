@@ -40,6 +40,13 @@ double_mu(MPOt<Tensor> const& Tn,
 	  MPOt<Tensor> const& Tm,
 	  MPOt<Tensor> const& j);
 
+template <class Tensor>
+Tensor
+double_mu(MPOt<Tensor> Tn,
+	  MPOt<Tensor> j1,
+	  MPOt<Tensor> Tm,
+	  MPOt<Tensor> j2);
+
 void write_singleKPM(IQTensor chtr,
 		     std::ofstream& chtrre_file,
 		     std::ofstream& chtrim_file);
