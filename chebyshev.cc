@@ -80,20 +80,22 @@ listandwrite_dangler(MPOt<Tensor> const& H,
   cheb.orthogonalize();
   iter.orthogonalize();
 
-  for(int i = 0; i < N; i++){
-    cheb = advance_dangler_chebyshevs(cheb, iter, N_sofar, Maxm, cutoff, fit, sweeps);
-    N_sofar++;
-    
-    //if we've hit the ceiling, quit: results will be junk.
-    if(Maxm <= maxM(cheb)) { writep = false; break;}
-
-    chebbd_file << N_sofar << " " << maxM(cheb) << "\n" << std::flush;
-    
-    //performance information
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> computation_time = t1 - t0;
-    timing_file << N_sofar << " " << computation_time.count() << "\n" << std::flush;
-    if ((0 == N_sofar % prog_per) && writep) { writeToFile(filename + ".chMPA", cheb); }
+  if(0 < N){
+    for(int i = 0; i < N; i++){
+      cheb = advance_dangler_chebyshevs(cheb, iter, N_sofar, Maxm, cutoff, fit, sweeps);
+      N_sofar++;
+      
+      //if we've hit the ceiling, quit: results will be junk.
+      if(Maxm <= maxM(cheb)) { writep = false; break;}
+      
+      chebbd_file << N_sofar << " " << maxM(cheb) << "\n" << std::flush;
+      
+      //performance information
+      auto t1 = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> computation_time = t1 - t0;
+      timing_file << N_sofar << " " << computation_time.count() << "\n" << std::flush;
+      if ((0 == N_sofar % prog_per) && writep) { writeToFile(filename + ".chMPA", cheb); }
+    }
   }
   
   if (writep) { writeToFile(filename + ".chMPA", cheb); }
