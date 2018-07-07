@@ -145,18 +145,46 @@ TEST(twopoint_correlation, zz_II) {
   std::cout << "position done\n"<<std::flush;
   auto mu = twopoint_correlation(zz, "Sz", "Sz");
   std::cout << "twpoint_correlation done\n"<<std::flush;
-  for(int j1 = 0; j1 < L; j1++) {
-    for(int j2 = 0; j2 < L; j2++) {
+  for(int j1 = 1; j1 <= L; j1++) {
+    for(int j2 = 1; j2 <= L; j2++) {
       int expctval = 0;
       expctval += (j1 == j2) ? pow(2,L)*3/8 : 0;
-      //+1 because jx is a vector (zero) index and k1 is a site (one) index
-      bool match = (j1 + 1 == k1 && j2 + 1 == k2) || (j1+1 == k2 && j2 + 1 == k1);
+      bool match = (j1 == k1 && j2  == k2) || (j1 == k2 && j2  == k1);
       expctval += match ? pow(2,L)/8 : 0 ;
       //std::cout << j1 << " " << j2 << " " << (j1 == j2) << " " << match << " " << expctval << " " << real(mu[j1][j2].cplx()) << "\n";
-      EXPECT_NEAR(real(mu[j1][j2].cplx()), expctval, 1e-10);
-      EXPECT_NEAR(imag(mu[j1][j2].cplx()), 0       , 1e-10);
+      EXPECT_NEAR(real(mu.cplx(j1,j2)), expctval, 1e-10);
+      EXPECT_NEAR(imag(mu.cplx(j1,j2)), 0       , 1e-10);
     }
   }
+}
+
+TEST(IOTest, writetohdf5) {
+  int N = 3;
+  
+  /* create a tensor to write */
+  Index ini = Index("i", N, Dangler, 0);
+  Index inj = Index("j", N, Dangler, 0);
+  Index ink = Index("k", N, Dangler, 0);
+
+  auto tensor = ITensor(ini, inj, ink);
+
+  /* populate this tensor in such a way that elements are unique and
+     predictable */
+  for(int i = 1; i <= N; i++){
+    for(int j = 1; j <= N; j++){
+      for(int k = 1; k <= N; k++) {
+	std::cout << i << " " << j << " " << k << " " << (i-1)*pow(N, 2) + (j-1)*N + (k-1) << "\n";
+	tensor.set(ini(i), inj(j), ink(k), (i-1)*pow(N, 2) + (j-1)*N + (k-1));
+      }
+    }
+  }
+
+  /* write the tensor */
+  export_hdf5(tensor, "test-tensor.h5");
+  tensor *= im;
+  PrintData(tensor);
+  export_hdf5(tensor, "test-tensor.cplx.h5");
+
 }
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

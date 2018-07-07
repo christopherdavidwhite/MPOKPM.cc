@@ -5,9 +5,11 @@
 #include "itensor/decomp.h"
 #include "globals.h"
 #include "util.h"
+#include <H5Cpp.h>
 
 #ifndef MPOKPM_UTIL
 #define MPOKPM_UTIL
+using namespace H5;
 using namespace itensor;
 
 MPOt<IQTensor>
@@ -298,6 +300,129 @@ write_doubleKPM(IQTensor mu,
   }
   return vecmu;
 }
+
+/* Export the data tensor A to filename filename; data is reshaped to
+   match the lengths of the indices.
+
+   Suppose A has indices
+
+     i1, i2, ..., ir
+
+   with sizes
+
+     n1, n2, ..., nr.
+
+   If A is real, this writes A as an n1 x n2 x ... x nr matrix; if A
+   is complex, this writes A as an n1 x n2 x ... x nr x 2 matrix (real
+   and complex parts).
+
+   My use case is exporting an I(Q)Tensor of results for analysis in
+   Julia; if you want to do something else you're probably going to
+   have to go learn some HDF5 and write some more code.
+
+   Based on
+
+    https://support.hdfgroup.org/ftp/HDF5/current/src/unpacked/c++/examples/h5tutr_rdwt.cpp
+    https://support.hdfgroup.org/ftp/HDF5/current/src/unpacked/c++/examples/h5tutr_crtdat.cpp ;
+
+   flags are passed straight to H5File initialization function,
+   documented at
+  
+    https://support.hdfgroup.org/HDF5/doc/cpplus_RM/class_h5_1_1_h5_file.html#af25054898de738072217e274217a278c .
+
+   You probably want H5F_ACC_TRUNC (silently overwrites on existing
+   data) or H5F_ACC_EXCL (errors if file exists). I define versions
+   with default H5F_ACC_TRUNC below.
+*/
+
+int export_hdf5(ITensor A, std::string filename, int flags)
+{
+
+  int rank = A.r();
+  std::vector<hsize_t> dims;
+
+  for(auto i: A.inds()) { dims.push_back(i.m()); }
+  
+  try {
+      Exception::dontPrint();
+      H5File file(filename, flags);
+
+      /* This is basically a closure: I have to pass in the indices
+	 and file somehow, and I don't know the applyFunction API well
+	 enough to know the Right Way to do that.
+
+	 Makes sense for the write function to depend on whether the
+	 tensor is real or complex---have to do different things on
+	 both the hdf5 side and the itensor side.
+
+	 These guys rely on two nontrivial facts about C++ and one
+	 about the HDF5 C++ API:
+
+	   1. a std::complex<double> is in memory a (contiguous) array
+	   of two doubles, 
+
+	   2. a std::vector<T> stores its data as a contiguous array
+	   of Ts, and
+
+	   3. The HDF5 API just takes a pointer to a contiguous array
+	   of data and does the requisite reshaping.
+
+	 These three facts together imply that the HDF5 library will
+	 take the memory store for a std::vector<std::complex<double>>
+	 and just reshape it into an n1 x n2 x ... x nr x 2 array.
+
+	 All of this results from the general C++ culture/design goal
+	 of being backwards-compatible with C. Nonetheless, it gives
+	 me the *howling fantods*: this sort of magic makes it so, so
+	 easy to make mistakes that the compiler can't catch. It's
+	 *not OK*.*/
+      
+      auto writeReal = [&rank,&dims,&file](Dense<Real> const& d) {
+	DataSpace dataspace(rank, dims.data());
+	DataSet dataset = file.createDataSet("tensor", PredType::NATIVE_DOUBLE, dataspace);
+	dataset.write(d.store.data(), PredType::NATIVE_DOUBLE);
+	return 1;
+      };
+      
+      auto writeCplx = [&rank,&dims,&file](Dense<Cplx> const& d) {
+	rank += 1;
+	dims.push_back(2);
+	DataSpace dataspace(rank, dims.data());
+	DataSet dataset = file.createDataSet("tensor", PredType::NATIVE_DOUBLE, dataspace);
+	dataset.write(d.store.data(), PredType::NATIVE_DOUBLE);
+	return 1;
+      };
+
+      if (isReal(A)) { applyFunc( writeReal, A.store());}
+      else           { std::cout << "cplx\n"; applyFunc( writeCplx, A.store());}
+      
+    }
+    
+    catch(FileIException error) {
+	error.printError();
+	return -1;
+    }
+
+    catch(DataSetIException error) {
+	error.printError();
+	return -1;
+    }
+
+    catch(DataSpaceIException error) {
+	error.printError();
+	return -1;
+    }
+  
+    return 0; 
+}
+
+int export_hdf5(ITensor A, std::string filename)
+{ return export_hdf5(A, filename, H5F_ACC_TRUNC); }
+/* export an IQTensor by just turning it into an ITensor */
+int export_hdf5(IQTensor A, std::string filename)
+{ return export_hdf5(toITensor(A), filename, H5F_ACC_TRUNC); }
+int export_hdf5(IQTensor A, std::string filename, int flags)
+{ return export_hdf5(toITensor(A), filename, flags); }
 
 template <class Tensor>
 MPOt<Tensor>

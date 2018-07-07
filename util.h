@@ -56,6 +56,11 @@ write_doubleKPM(IQTensor mu,
 		std::ofstream& realmu_file,
 		std::ofstream& imagmu_file );
 
+int export_hdf5(ITensor A, std::string filename, int flags);
+int export_hdf5(ITensor A, std::string filename);
+int export_hdf5(IQTensor A, std::string filename);
+int export_hdf5(IQTensor A, std::string filename, int flags);
+
 template <class Tensor>
 MPOt<Tensor>
 commutator(MPOt<Tensor> H,

@@ -15,6 +15,9 @@ $(info DEBUG)
 LIBFLAGS=$(LIBGFLAGS)
 CCFLAGS=$(CCGFLAGS)
 endif
+
+LIBFLAGS += -lhdf5 -lhdf5_cpp
+
 .PHONY: all
 all: construct-algebra conductivity dos twopoint-correlation
 

@@ -75,29 +75,12 @@ int main(int argc, char **argv)
     std::string q1 = quantities[i1];
     for(int i2 = 0; i2 < quantities.size(); i2++) {
       std::string q2 = quantities[i2];
-      std::string dir = output_filename + q1 + q2;
-      /* Unix only. Let's be honest: this is a stupid hack and the
-	 right thing to do is to use HDF5.*/
-      int returnval = mkdir(dir.c_str(), 0755);
-      if(0 != returnval) {
-	std::cerr << "Could not make directory: errno " << errno << "\n";
-	return(returnval);
-      }
+      std::string filename = output_filename + q1 + q2 + ".h5";
       
       //std::vector<std::vector<Tensor>> mu;
       auto mu = twopoint_correlation(Tn, q1, q2);
-      assert(mu.size() == L);
-      assert(mu[0].size() == L); //just a spot-check...
-      
-      //ftm assumes one-site observables
-      for(int j1 = 0; j1 < L; j1++) {
-	for(int j2 = 0; j2 < L; j2++) {
-	  auto f = dir + "/" + std::to_string(j1) + "-" + std::to_string(j2);
-	  OPENE(f + ".re", realmu_file);
-	  OPENE(f + ".im", imagmu_file);
-	  write_doubleKPM(mu[j1][j2], realmu_file, imagmu_file);
-	}
-      }
+
+      export_hdf5(mu, filename);
     }
   }
 }
