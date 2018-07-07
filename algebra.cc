@@ -217,79 +217,8 @@ int nsweep )
   fitmultMPAlgebra(A,B,lbc, res,sweeps,args);
 }
 
-
-/*
-  Compute tr[ Tn t1 Tn^{\dag} t2]
-
-  Returns a guy with two danngler indices.
-
-  Assumes orthogonality center left of jleft + len(tens).
-*/
-template<class Tensor>
-Tensor
-correlation(MPOt<Tensor> const& Tn,
-	    int j1, int j2,
-	    Tensor t1, Tensor t2)
-{
-  auto sites = Tn.sites(); 
-  
-  assert(Tn.orthoCenter() <= std::min(j1,j2) + 1);
-  int jleft  = std::min(j1,j2);
-  int jright = std::max(j1,j2);
-
-  Tensor C;
-  
-  Tensor TAdag;
-  Tensor tf, ts;
-
-  //rightmost site
-  if (j1 == j2)    { tf = t1;                    ts = t2; }
-  else if(j1 < j2) { tf = sites.op("Id",jright); ts = t2; }
-  else if(j2 < j1) { tf = t1;                    ts = sites.op("Id",jright); }
-
-  TAdag = dag(Tn.A(jright));
-  TAdag = swapPrime(TAdag, 0,1,Site);
-  if(jright == 1) { TAdag.prime(Dangler); }
-  else            { TAdag.prime(leftLinkInd(Tn,jright)); }
-  
-  C = Tn.A(jright);
-  C *= prime(tf);
-  C.mapprime(2,1,Site);
-  C *= prime(TAdag, Site);
-  C.mapprime(3,1, Site);
-  C *= mapprime(dag(ts), 1,2);
-
-  if (j1 == j2) { return C; }
-  //between the two sites
-  if(std::abs(j1 - j2) > 1) {
-    for(int k = jright-1; k > jleft; k--){
-      C *= Tn.A(k);
-      C *= prime(dag(Tn.A(k)), Link);
-    }
-  }
-
-  if(j1 < j2)      { tf = t1;                   ts = sites.op("Id",jleft); }
-  else if(j2 < j1) { tf = sites.op("Id",jleft); ts = t2; }
-
-  TAdag = dag(Tn.A(jleft));
-  TAdag = swapPrime(TAdag, 0,1,Site);
-  if(jleft == 1) { TAdag.prime(Dangler); }
-  else           { TAdag.prime(leftLinkInd(Tn,jleft)); }
-
-  C *= Tn.A(jleft);
-  C *= prime(tf);
-  C.mapprime(2,1,Site);
-  C *= prime(TAdag);
-  C.mapprime(3,1, Site);
-  C *= mapprime(dag(ts), 1,2);
-  C.mapprime(2,1);
-  assert(2==C.r());
-  return C ;
-}
-
-template<class Tensor>
-std::vector<std::vector<Tensor>>
-twopoint_correlation(MPOt<Tensor> const& Tn,
+IQTensor
+twopoint_correlation(IQMPO const& Tn,
 		     std::string q1,
 		     std::string q2)
 {
@@ -297,37 +226,26 @@ twopoint_correlation(MPOt<Tensor> const& Tn,
   int N = Tn.N();
   
   auto sites = Tn.sites();
-  Tensor E; 
-  std::vector<std::vector<Tensor>> correlations(N, std::vector<Tensor>(N));
-
-  for(int jleft = 1; jleft <= N; jleft++) {
-    for(int jright = jleft; jright <= N; jright++) {
-      /*does twice as much as it has to for jleft=jright*/
-      
-      int j1, j2;
-      Tensor C;
-      j1 = jleft; j2 = jright;
-      C = correlation(Tn, j1, j2, sites.op(q1,j1), sites.op(q2,j2));
-      if(jleft != 1) { C *= E; }
-      correlations[j1-1][j2-1] = C;
-
-      j1 = jright; j2 = jleft;
-      C = correlation(Tn, j1, j2, sites.op(q1,j1), sites.op(q2,j2));
-      if(jleft != 1) {C *= E;}
-      correlations[j1-1][j2-1] = C;
-    }
-    auto TAdag = dag(Tn.A(jleft));
-    TAdag.prime(Dangler);
-    TAdag.prime(Link);
-    if (1 == jleft) { E  = Tn.A(jleft)*TAdag; }
-    //suboptimal contraction ordering
-    else            { E *= Tn.A(jleft)*TAdag; }
-  } //jleft
   
-  return correlations;
+  auto q1_ampo = AutoMPO(sites);
+  q1_ampo += 1.0,q1,1;
+  auto q1_mpo = IQMPO(q1_ampo);
+  for(int j1 = 2; j1 <= N; j1++) {
+    q1_ampo = AutoMPO(sites);
+    q1_ampo += 1.0,q1,j1;
+    q1_mpo = oplus(q1_mpo, IQMPO(q1_ampo));
+  }
+
+  auto q2_ampo = AutoMPO(sites);
+  q2_ampo += 1.0,q2,1;
+  auto q2_mpo = IQMPO(q2_ampo);
+  for(int j2 = 2; j2 <= N; j2++) {
+    q2_ampo = AutoMPO(sites);
+    q2_ampo += 1.0,q2,j2;
+    q2_mpo = oplus(q2_mpo, IQMPO(q2_ampo));
+  }
+
+  return double_mu(Tn, q1_mpo, Tn, q2_mpo);
 }
-		     
-
-
 
 #endif //#ifndef MPOKPM_ALGEBRA

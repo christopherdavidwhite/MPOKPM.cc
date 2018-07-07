@@ -104,10 +104,10 @@ TEST(twopoint_correlation, allI_II) {
   I.position(1);
 
   auto mu = twopoint_correlation(I, "Id", "Id");
-  for(int j1 = 0; j1 < L; j1++) {
-    for(int j2 = 0; j2 < L; j2++) {
-      EXPECT_NEAR(real(mu[j1][j2].cplx()), pow(2,L), 1e-10);
-      EXPECT_NEAR(imag(mu[j1][j2].cplx()), 0       , 1e-10);
+  for(int j1 = 1; j1 <= L; j1++) {
+    for(int j2 = 1; j2 <= L; j2++) {
+      EXPECT_NEAR(real(mu.cplx(j1,j2)), pow(2,L), 1e-10);
+      EXPECT_NEAR(imag(mu.cplx(j1,j2)), 0       , 1e-10);
     }
   }
 }
@@ -119,11 +119,11 @@ TEST(twopoint_correlation, allI_zz) {
   I.position(1);
 
   auto mu = twopoint_correlation(I, "Sz", "Sz");
-  for(int j1 = 0; j1 < L; j1++) {
-    for(int j2 = 0; j2 < L; j2++) {
+  for(int j1 = 1; j1 <= L; j1++) {
+    for(int j2 = 1; j2 <= L; j2++) {
       int expctval = j1 == j2 ? (pow(2,L)/4) : 0;
-      EXPECT_NEAR(real(mu[j1][j2].cplx()), expctval, 1e-10);
-      EXPECT_NEAR(imag(mu[j1][j2].cplx()), 0       , 1e-10);
+      EXPECT_NEAR(real(mu.cplx(j1,j2)), expctval, 1e-10);
+      EXPECT_NEAR(imag(mu.cplx(j1,j2)), 0       , 1e-10);
     }
   }
 }
