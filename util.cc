@@ -394,7 +394,7 @@ int export_hdf5(ITensor A, std::string filename, int flags)
       };
 
       if (isReal(A)) { applyFunc( writeReal, A.store());}
-      else           { std::cout << "cplx\n"; applyFunc( writeCplx, A.store());}
+      else           { applyFunc( writeCplx, A.store());}
       
     }
     
