@@ -64,8 +64,8 @@ TEST_F(ConductivityTest, RandomParamagnetMu) {
   double shzl2 = 0;     for (double& thz : hz) { shzl2 += pow(thz,2); }
   double shzlhzlp1 = 0; for (int n = 0; n < L; n++) { shzlhzlp1 += hz[n]*hz[n+1]; }
 
-  std::cout << "shzl2 " << shzl2 << "\n";
-  std::cout << "shzlhzlp1 " << shzlhzlp1 << "\n";
+  //std::cout << "shzl2 " << shzl2 << "\n";
+  //std::cout << "shzlhzlp1 " << shzlhzlp1 << "\n";
   auto cheb = listandwrite_dangler(random_paramagnet, filename, N, Maxm, cutoff, true, 4, 16);
   auto mu = double_mu(cheb, cheb, j);
   
@@ -142,9 +142,9 @@ TEST(twopoint_correlation, zz_II) {
   
   IQMPO zz = IQMPO(zz_ampo);
   zz.position(1);
-  std::cout << "position done\n"<<std::flush;
+  //std::cout << "position done\n"<<std::flush;
   auto mu = twopoint_correlation(zz, "Sz", "Sz");
-  std::cout << "twpoint_correlation done\n"<<std::flush;
+  //std::cout << "twpoint_correlation done\n"<<std::flush;
   for(int j1 = 1; j1 <= L; j1++) {
     for(int j2 = 1; j2 <= L; j2++) {
       int expctval = 0;
@@ -173,7 +173,7 @@ TEST(IOTest, writetohdf5) {
   for(int i = 1; i <= N; i++){
     for(int j = 1; j <= N; j++){
       for(int k = 1; k <= N; k++) {
-	std::cout << i << " " << j << " " << k << " " << (i-1)*pow(N, 2) + (j-1)*N + (k-1) << "\n";
+	//std::cout << i << " " << j << " " << k << " " << (i-1)*pow(N, 2) + (j-1)*N + (k-1) << "\n";
 	tensor.set(ini(i), inj(j), ink(k), (i-1)*pow(N, 2) + (j-1)*N + (k-1));
       }
     }
