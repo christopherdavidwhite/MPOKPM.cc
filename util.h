@@ -11,6 +11,8 @@ MPOt<IQTensor> eye(SiteSet sites);
 
 template <class Tensor> Tensor full(MPOt<Tensor> B);
 
+IQMPO singlesite_IQMPO(std::string q, int j, SiteSet sites);
+  
 std::tuple<IQMPO,std::vector<double>, double>
 XX(SiteSet sites, double hz, std::default_random_engine e);
 
