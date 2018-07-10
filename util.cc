@@ -249,14 +249,14 @@ double_mu(MPOt<Tensor> Tn,
   j1.mapprime(1,2);
   j1.mapprime(0,1);
 
-  Tn.mapprime(1,3);
-  Tn.mapprime(0,2);
+  Tm.mapprime(1,3);
+  Tm.mapprime(0,2);
 
   j2.mapprime(0,3);
   j2.mapprime(1,0); 
 
-  auto L = j1.A(N) * Tn.A(N) * j2.A(N) * Tm.A(N);
-  for(int i = N-1; i >= 1; --i) { L = L * j1.A(i) * Tn.A(i) * j2.A(i) * Tm.A(i); }
+  auto L = Tn.A(N) * j1.A(N) * Tm.A(N) * j2.A(N);
+  for(int i = N-1; i >= 1; --i) { L = L * Tn.A(i)*j1.A(i) * Tm.A(i) * j2.A(i);}
   return L;
 }
 
