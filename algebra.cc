@@ -13,7 +13,7 @@ const auto Dangler = IndexType("Dangler");
    doesn't even try to do the right thing wrt any nontrivial
    conservation. */
 IQMPO
-oplus(IQMPO A, IQMPO B)
+oplus(IQMPO A, IQMPO B, std::string indexname)
 {
   auto out = A;
   auto Bp = B;
