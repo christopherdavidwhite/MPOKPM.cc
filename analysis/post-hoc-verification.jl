@@ -28,7 +28,7 @@ end
 
 function exact_μ{T}(H :: Array{T,2}, j :: Array{Float64,2}, N :: Int)
     μ = zeros(N,N)
-    @time d,v = eig(H)
+    d,v = eig(H)
     H = zeros((2,2))
     gc()
     
@@ -54,7 +54,7 @@ end
 
 function correlation{T}(H :: Array{T,2}, A :: Array{Float64,2}, B :: Array{Float64,2}, N :: Int)
     μ = zeros(N,N)
-    @time d,v = eig(H)
+    d,v = eig(H)
     H = zeros((2,2))
     gc()
 
