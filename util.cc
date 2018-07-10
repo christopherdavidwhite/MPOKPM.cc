@@ -33,6 +33,19 @@ full(MPOt<Tensor> B)
 
 template IQTensor full(MPOt<IQTensor> B);
 
+IQMPO singlesite_IQMPO(std::string q, int j, SiteSet sites)
+{
+  int N = sites.N();
+  IQMPO H = eye(sites);
+
+  IQTensor Aj = H.A(j);
+  Aj *= prime(sites.op(q,j));
+  Aj.mapprime(2,1,Site);
+  H.setA(j, Aj);
+
+  return H;
+}
+
 std::tuple<IQMPO,std::vector<double>, double>
 XX(SiteSet sites, double hz, std::default_random_engine e)
 {
