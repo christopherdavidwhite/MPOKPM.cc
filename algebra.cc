@@ -53,6 +53,7 @@ oplus(IQMPO A, IQMPO B, std::string indexname)
   return out;
 }
 
+IQMPO oplus(IQMPO A, IQMPO B) { return oplus(A, B, "iout") ;}
 
 /* This guy behaves differently from Miles's nmultMPO in a
    user-relevant way in how it does truncation. In particular:
