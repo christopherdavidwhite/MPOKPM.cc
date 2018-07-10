@@ -22,21 +22,21 @@ oplus(IQMPO A, IQMPO B, std::string indexname)
      trivial one, then proceed on the assumption that it does. */
   if (!findtype(out.A(1), Dangler)) {
     //add dangler index to A
-    auto i1 = IQIndex("iq", Index("i",1, Dangler, 0), QN(0));
+    auto i1 = IQIndex(indexname, Index("i",1, Dangler, 0), QN(0));
     auto S1 = setElt(i1(1));
     out.setA(1, out.A(1)*S1);
   }
 
   if (!findtype(Bp.A(1), Dangler)) {
     //add dangler index to B
-    auto i2 = IQIndex("iq", Index("i",1, Dangler, 0), QN(0));
+    auto i2 = IQIndex(indexname, Index(indexname,1, Dangler, 0), QN(0));
     auto S2 = setElt(i2(1));
     Bp.setA(1, Bp.A(1)*S2);
   }
 
   IQIndex iA = findtype(out.A(1), Dangler).dag();
   IQIndex iB = findtype(Bp.A(1), Dangler).dag();
-  IQIndex iout = IQIndex("iq", Index("iout", iA.m() + iB.m(), Dangler, 0), QN(0));
+  IQIndex iout = IQIndex(indexname, Index(indexname, iA.m() + iB.m(), Dangler, 0), QN(0));
 
   IQTensor Acap = IQTensor(iout, iA);
   for(int l = 1; l <= iA.m(); l++) { Acap.set(iout(l), iA(l), 1.0); }
