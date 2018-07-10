@@ -223,28 +223,16 @@ twopoint_correlation(IQMPO const& Tn,
 		     std::string q1,
 		     std::string q2)
 {
-  assert(Tn.orthoCenter() == 1);
   int N = Tn.N();
-  
   auto sites = Tn.sites();
   
-  auto q1_ampo = AutoMPO(sites);
-  q1_ampo += 1.0,q1,1;
-  auto q1_mpo = IQMPO(q1_ampo);
-  /*for(int j1 = 2; j1 <= N; j1++) {
-    q1_ampo = AutoMPO(sites);
-    q1_ampo += 1.0,q1,j1;
-    q1_mpo = oplus(q1_mpo, IQMPO(q1_ampo));
-    }*/
-  auto q2_ampo = AutoMPO(sites);
-  q2_ampo += 1.0,q2,1;
-  auto q2_mpo = IQMPO(q2_ampo);
-  /*for(int j2 = 2; j2 <= N; j2++) {
-    q2_ampo = AutoMPO(sites);
-    q2_ampo += 1.0,q2,j2;
-    q2_mpo = oplus(q2_mpo, IQMPO(q2_ampo));
-    }*/
-
+  auto q1_mpo = singlesite_IQMPO(q1, 1, sites);
+  for(int j1 = 2; j1 <= N; j1++)
+    { q1_mpo = oplus(q1_mpo, singlesite_IQMPO(q1, j1, sites), "corr_loc"); }
+    
+  auto q2_mpo = singlesite_IQMPO(q2, 1, sites);
+  for(int j2 = 2; j2 <= N; j2++)
+    { q2_mpo = oplus(q2_mpo, singlesite_IQMPO(q2, j2, sites), "corr_loc"); }
   return double_mu(Tn, q1_mpo, Tn, q2_mpo);
 }
 
