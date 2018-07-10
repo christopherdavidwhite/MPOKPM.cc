@@ -70,17 +70,20 @@ int main(int argc, char **argv)
   readFromFile(dangler_filename, Tn);
   
   int L = Tn.N();
-  
+   
   for(int i1 = 0; i1 < quantities.size(); i1++) {
     std::string q1 = quantities[i1];
     for(int i2 = 0; i2 < quantities.size(); i2++) {
       std::string q2 = quantities[i2];
       std::string filename = output_filename + q1 + q2 + ".h5";
+      std::cout << q1 << " " << q2 << "\n";
+      IQMPO Sz1 = singlesite_IQMPO("Sz", 1, sites);
+      IQMPO Sz2 = singlesite_IQMPO("Sz", 2, sites);
       auto mu = twopoint_correlation(Tn, q1, q2);
       
-      /* there's some crazy-strange cacheing (?) bug here. If I don't
+      /* there's some crazy-strange caching (?) bug here. If I don't
 	 do this, mu's .store() doesn't get updated (?!) */
-      mu.set(2,2, mu.real(2,2));//mu.cplx(2,2,2,2));
+      mu.set(2,2,2,2, mu.real(2,2,2,2));
       
       export_hdf5(mu, filename);
     }
