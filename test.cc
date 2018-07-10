@@ -182,9 +182,112 @@ TEST(IOTest, writetohdf5) {
   /* write the tensor */
   export_hdf5(tensor, "test-tensor.h5");
   tensor *= im;
-  PrintData(tensor);
   export_hdf5(tensor, "test-tensor.cplx.h5");
 
+}
+
+/* Julia
+   include("analysis/post-hoc-verification.jl")
+   H = rf_2NJW(zeros(L)); X,Y,Z,P,M = pauli_matrices_sparse(L); trace(Z[1]*H*Z[1]*H) * 2.0^(-L)/4
+   etc.
+*/
+TEST(Verification, double_mu) {
+  double hz = 0;
+  int L = 4;
+  SiteSet sites = SpinHalf(L);
+  std::string filename = "/tmp/conductivity";
+  
+  std::vector<double> hzs;
+  IQMPO H;
+  double opnorm_bound;
+  double cutoff = 1e-14;
+  bool sweep_flag = false;
+  int nsweeps = 0;
+  int Maxm = 500;
+  std::default_random_engine e{0};
+  
+  std::tie(H, hzs, opnorm_bound) = rf_2NJW(sites, hz, e);
+  H *= 1/opnorm_bound;
+
+  const double Sz1_H_Sz1_H = 0.00739644970414201;
+  const double Sz1_H_Sz2_H = 0.002958579881656805;
+  const double Sz1_Sz1_H   = 0;
+  const double Sz1_HH      = 0;
+  const double Sz1_Sz2_H   = 0.019230769230769232;
+  //I am surprised that this is the same as the above
+  const double HH          = 0.07692307692307693;
+  /* different from Sz1_H_Sz1_H because commutes nontrivially through
+     more terms: not PBC!*/
+  const double Sz2_H_Sz2_H = 0.0014792899408284025;
+  IQMPO Tn = listandwrite_dangler(H, filename, 0, Maxm, cutoff, sweep_flag, nsweeps, 32);
+  IQTensor TnTn = double_mu(Tn, eye(sites), Tn, eye(sites));
+  EXPECT_NEAR(TnTn.real(1,1), 1.0, 1e-10);
+  EXPECT_NEAR(TnTn.real(1,2), 0.0, 1e-10);
+  EXPECT_NEAR(TnTn.real(2,1), 0.0, 1e-10);
+  EXPECT_NEAR(TnTn.real(2,2), HH,  1e-10);
+
+  
+  IQMPO Sz1 = singlesite_IQMPO("Sz", 1, sites);
+  IQMPO Sz2 = singlesite_IQMPO("Sz", 2, sites);
+  IQTensor mu11 = double_mu(Tn, Sz1, Tn, Sz1);
+  EXPECT_NEAR(mu11.real(1,1), 0.25, 1e-10);
+  EXPECT_NEAR(mu11.real(1,2), 0.00, 1e-10);
+  EXPECT_NEAR(mu11.real(2,1), 0.00, 1e-10);
+  EXPECT_NEAR(mu11.real(2,2), Sz1_H_Sz1_H, 1e-10);
+    
+  IQTensor mu12 = double_mu(Tn, Sz1, Tn, Sz2);
+  EXPECT_NEAR(mu12.real(1,1), 0, 1e-10);
+  EXPECT_NEAR(mu12.real(1,2), Sz1_Sz2_H, 1e-10);
+  EXPECT_NEAR(mu12.real(2,1), Sz1_Sz2_H, 1e-10);
+  EXPECT_NEAR(mu12.real(2,2), Sz1_H_Sz2_H, 1e-10);
+
+  IQMPO alg = oplus(Sz1, Sz2, "cor_loc");
+  //PrintData(alg.A(1));
+  //PrintData(alg.A(2));
+  IQTensor FSzSz = double_mu(alg, eye(sites), alg, eye(sites));
+  EXPECT_NEAR(FSzSz.real(1,1), pow(2,L)/4, 1e-10);
+  EXPECT_NEAR(FSzSz.real(1,2), 0, 1e-10);
+  EXPECT_NEAR(FSzSz.real(2,1), 0, 1e-10);
+  EXPECT_NEAR(FSzSz.real(2,2), pow(2,L)/4, 1e-10);
+
+
+  IQMPO Sz1Sz2I = oplus( eye(sites), alg);
+  IQTensor triple = double_mu(Sz1Sz2I, Sz1Sz2I, Sz1Sz2I, eye(sites));
+  EXPECT_NEAR(triple.real(1,1,1), pow(2,L), 1e-10);
+  EXPECT_NEAR(triple.real(2,2,1), pow(2,L)/4, 1e-10);
+  EXPECT_NEAR(triple.real(2,1,2), pow(2,L)/4, 1e-10);
+  EXPECT_NEAR(triple.real(1,2,2), pow(2,L)/4, 1e-10);
+  EXPECT_NEAR(triple.real(3,3,1), pow(2,L)/4, 1e-10);
+  EXPECT_NEAR(triple.real(3,1,3), pow(2,L)/4, 1e-10);
+  
+  EXPECT_NEAR(triple.real(1,1,3), 0, 1e-10);
+  EXPECT_NEAR(triple.real(1,2,1), 0, 1e-10);
+  EXPECT_NEAR(triple.real(3,3,3), 0, 1e-10);
+  EXPECT_NEAR(triple.real(2,1,3), 0, 1e-10);
+
+  IQTensor mualg = double_mu(alg, Tn, alg, Tn);
+  EXPECT_NEAR(mualg.real(1,1,1,1), 0.25, 1e-10);
+  EXPECT_NEAR(mualg.real(1,1,1,2), 0.0, 1e-10);
+  EXPECT_NEAR(mualg.real(1,1,2,1), 0.0, 1e-10);
+  EXPECT_NEAR(mualg.real(1,1,2,2), Sz1_Sz2_H, 1e-10);
+  EXPECT_NEAR(mualg.real(1,2,1,1), 0.0, 1e-10);
+  EXPECT_NEAR(mualg.real(1,2,1,2), Sz1_H_Sz1_H, 1e-10);
+  EXPECT_NEAR(mualg.real(1,2,2,1), Sz1_Sz2_H, 1e-10);
+  EXPECT_NEAR(mualg.real(1,2,2,2), Sz1_H_Sz2_H, 1e-10);
+
+  EXPECT_NEAR(mualg.real(2,1,1,1), 0, 1e-10);
+  EXPECT_NEAR(mualg.real(2,1,1,2), Sz1_Sz2_H, 1e-10);
+  EXPECT_NEAR(mualg.real(2,1,2,1), 0.25, 1e-10);
+  EXPECT_NEAR(mualg.real(2,1,2,2), 0.0, 1e-10);
+  EXPECT_NEAR(mualg.real(2,2,1,1), Sz1_Sz2_H, 1e-10);
+  EXPECT_NEAR(mualg.real(2,2,1,2), Sz1_H_Sz2_H, 1e-10);
+  EXPECT_NEAR(mualg.real(2,2,2,1), 0, 1e-10);
+  EXPECT_NEAR(mualg.real(2,2,2,2), Sz2_H_Sz2_H, 1e-10);
+  
+  /* (/ 0.0073964497041420097 0.0014792899408283937)
+     this is really close to five (of all things)
+  */
+  
 }
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
