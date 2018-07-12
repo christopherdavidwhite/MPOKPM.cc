@@ -411,20 +411,11 @@ int export_hdf5(ITensor A, std::string filename, int flags)
       
     }
     
-    catch(FileIException error) {
-	error.printError();
-	return -1;
-    }
+    catch(FileIException error) { return -1; }
 
-    catch(DataSetIException error) {
-	error.printError();
-	return -1;
-    }
+    catch(DataSetIException error) { return -1; }
 
-    catch(DataSpaceIException error) {
-	error.printError();
-	return -1;
-    }
+    catch(DataSpaceIException error) { return -1; }
   
     return 0; 
 }
