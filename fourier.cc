@@ -66,10 +66,10 @@ int main(int argc, char **argv)
   
 
   std::cout << "q ";
-  for(int q = 0; q < L; q++) {
+  for(int q = 0; q < L/2; q++) {
     auto Szq_ampo = AutoMPO(Tn.sites());
     std::cout << q << " " << std::flush;
-    for(int j = 1; j <= L/2; j++) { Szq_ampo += std::exp(2*im*pi*q*j/L), "Sz", j; }
+    for(int j = 1; j <= L; j++) { Szq_ampo += std::exp(2*im*pi*q*j/L), "Sz", j; }
     auto Szq_mpo = IQMPO(Szq_ampo);
     IQTensor mu = double_mu(Tn, Szq_mpo, Tn, Szq_mpo);
 
