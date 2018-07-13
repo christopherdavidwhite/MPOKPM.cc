@@ -71,8 +71,8 @@ int main(int argc, char **argv)
     auto Szq_mpo = IQMPO(Szq_ampo);
     IQTensor mu = double_mu(Tn, Szq_mpo, Tn, Szq_mpo);
 
-    OPENE(output_filename + "SzqSzq." + std::to_string(q) + ".re",  realmu_file);
-    OPENE(output_filename + "SzqSzq." + std::to_string(q) + ".im",  imagmu_file);
+    OPENE(output_filename + ".SzqSzq." + std::to_string(q) + ".re",  realmu_file);
+    OPENE(output_filename + ".SzqSzq." + std::to_string(q) + ".im",  imagmu_file);
     write_doubleKPM(mu, realmu_file, imagmu_file );
   }
 }
