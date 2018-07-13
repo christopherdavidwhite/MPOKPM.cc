@@ -19,7 +19,7 @@ endif
 LIBFLAGS += -lhdf5 -lhdf5_cpp
 
 .PHONY: all
-all: construct-algebra conductivity dos twopoint-correlation
+all: construct-algebra conductivity dos twopoint-correlation fourier
 
 .PHONY: test
 test: test.o util.o
@@ -32,6 +32,9 @@ HFILES=util.h
 
 %.o: %.cc algebra.cc util.cc chebyshev.cc globals.h util.h
 	$(CCCOM) -c $(CCFLAGS) -o $@ $<
+
+fourier: fourier.o $(OBJFILES) $(HFILES)
+	$(CCCOM) $(CCFLAGS) $< -o $@ $(LIBFLAGS) $(OBJFILES) -lpthread
 
 conductivity: conductivity.o $(OBJFILES) $(HFILES)
 	$(CCCOM) $(CCFLAGS) $< -o $@ $(LIBFLAGS) $(OBJFILES) -lpthread
