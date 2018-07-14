@@ -143,14 +143,12 @@ function check_Sz_correlation(H, ifn, L)
 
     #julia's h5read is broken. Need the reshape to fix.
     μcc = h5read("$(ifn)SzSz.h5", "/tensor")
-    @show size(μcc)
     N = size(μcc, 2)
     μcc = reshape(μcc, (N,L,N,L))
     
     j1 = 1
     j2 = 1
     μed = correlation(H, 0.5*Z[j1], 0.5*Z[j2], N)
-    @show size(μed)
     Sz1Sz1_diff = 2.0^(-L)* μed - μcc[:,j1, :,j2]
     @show abs.(Sz1Sz1_diff) |> maximum
 
