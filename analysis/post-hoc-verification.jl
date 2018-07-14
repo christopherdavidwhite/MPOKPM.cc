@@ -52,8 +52,8 @@ function exact_μ{T}(H :: Array{T,2}, j :: Array{Float64,2}, N :: Int)
     return μ
 end
 
-function correlation{T}(H :: Array{T,2}, A :: Array{Float64,2}, B :: Array{Float64,2}, N :: Int)
-    μ = zeros(N,N)
+function correlation{T,S,R}(H :: Array{T,2}, A :: Array{S,2}, B :: Array{R,2}, N :: Int)
+    μ = zeros(Complex{Float64},N,N)
     d,v = eig(H)
     H = zeros((2,2))
     gc()
@@ -164,6 +164,25 @@ function check_Sz_correlation(H, ifn, L)
     @show abs.(SzSz_diff) |> maximum
 end
     
+function check_Sz_fourier_correlation(H, ifn, L)
+    X,Y,Z,P,M = pauli_matrices_sparse(L)
+    Z = map(full, Z)
+
+    #julia's h5read is broken. Need the reshape to fix.
+    for q = 0:Int(L/2)-1
+        μcc  =    readdlm("$(ifn).SzqSzq.$(q).re")
+        μcc += im*readdlm("$(ifn).SzqSzq.$(q).im")[:,1:end-1]
+        N = size(μcc, 2)
+
+        Zq = zeros(2^L, 2^L)
+        for j = 1:L
+            Zq += exp(im*j*(2*pi*q/L)) * Z[j]
+        end
+        μed = correlation(H, Zq, Zq, N)/4
+        SzqSzq_diff = 2.0^(-L)* μed - μcc
+        @show q, abs.(SzqSzq_diff) |> maximum
+    end
+end
 
 s = ArgParseSettings()
 @add_arg_table s begin
@@ -206,8 +225,8 @@ function main(args)
         @show trace(H^2)
         check_dos_trace(H, ifn, ofn, L)
         check_conductivity(H, j, ifn, ofn, L)
+        check_Sz_fourier_correlation(H,ifn,L)
         check_Sz_correlation(H, ifn, L)
-        #check conductivity coeffs
     end
 end
 main(ARGS)
