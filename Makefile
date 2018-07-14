@@ -63,23 +63,32 @@ vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
 
 #there's almost certainly a cleaner way to do this
 #in particular: separate target for each model
-verification: conductivity construct-algebra dos twopoint-correlation fourier
+.PHONY: verification
+verification: verification-setup rfheis 2NJW
+
+.PHONY: verification-setup
+verification-setup:
+
 	rm -rf $(VDIR)
 	mkdir -p $(VDIR)
-	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).rfheis -m rfheis
-	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).2NJW  -m 2NJW
-	./fourier --sites $(vfn).rfheis.sites --dangler $(vfn).rfheis.chMPA -o $(vfn).rfheis
-	./fourier --sites $(vfn).2NJW.sites --dangler $(vfn).2NJW.chMPA -o $(vfn).2NJW --model 2NJW
-	./twopoint-correlation --sites $(vfn).rfheis.sites --dangler $(vfn).rfheis.chMPA -o $(vfn).rfheis Sz
-	./twopoint-correlation --sites $(vfn).2NJW.sites --dangler $(vfn).2NJW.chMPA -o $(vfn).2NJW Sz
-	./conductivity --sites $(vfn).rfheis.sites --dangler $(vfn).rfheis.chMPA -o $(vfn).rfheis
-	./conductivity --sites $(vfn).2NJW.sites --dangler $(vfn).2NJW.chMPA -o $(vfn).2NJW --model 2NJW
-	./dos          --sites $(vfn).rfheis.sites --dangler $(vfn).rfheis.chMPA -o $(vfn).rfheis
-	./dos          --sites $(vfn).2NJW.sites --dangler $(vfn).2NJW.chMPA -o $(vfn).2NJW
 
-	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).rfheis -o $(vfn).rfheis -m rfheis
-	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).2NJW -o $(vfn).2NJW -m 2NJW
+.PHONY: rfheis
+rfheis:
+	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).$@ -m $@
+	./fourier --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn)$@.
+	./twopoint-correlation --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@ Sz
+	./conductivity --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@ --model $@
+	./dos          --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@
+	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).$@ -o $(vfn).$@ -m $@
 
+.PHONY: 2NJW
+2NJW:
+	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).$@ -m r$@
+	./fourier --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn)$@.
+	./twopoint-correlation --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@Sz
+	./conductivity --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@ --model $@
+	./dos          --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@
+	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).$@ -o $(vfn).$@ -m $@
 .PHONY: ps
 ps: construct-algebra.cc.ps chebyshev.cc.ps  dos.cc.ps conductivity.cc.ps util.cc.ps algebra.cc.ps Makefile.ps
 
