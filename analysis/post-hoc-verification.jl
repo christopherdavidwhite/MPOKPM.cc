@@ -178,7 +178,7 @@ function check_Sz_fourier_correlation(H, ifn, L)
         for j = 1:L
             Zq += exp(im*j*(2*pi*q/L)) * Z[j]
         end
-        μed = correlation(H, Zq, Zq, N)/4
+        μed = correlation(H, Zq, Zq', N)/4
         SzqSzq_diff = 2.0^(-L)* μed - μcc
         @show q, abs.(SzqSzq_diff) |> maximum
     end
