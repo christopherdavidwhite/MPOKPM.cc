@@ -67,7 +67,7 @@ vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
 verification: verification-setup rfheis 2NJW
 
 .PHONY: verification-setup
-verification-setup:
+verification-setup: construct-algebra fourier twopoint-correlation dos analysis/post-hoc-verification.jl
 
 	rm -rf $(VDIR)
 	mkdir -p $(VDIR)
@@ -75,7 +75,7 @@ verification-setup:
 .PHONY: rfheis
 rfheis:
 	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).$@ -m $@
-	./fourier --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn)$@.
+	./fourier --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@
 	./twopoint-correlation --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@ Sz
 	./conductivity --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@ --model $@
 	./dos          --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@
@@ -83,9 +83,9 @@ rfheis:
 
 .PHONY: 2NJW
 2NJW:
-	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).$@ -m r$@
-	./fourier --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn)$@.
-	./twopoint-correlation --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@Sz
+	./construct-algebra -L $(vL) -N $(vN) -M $(vM) -f $(vfn).$@ -m $@
+	./fourier --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@
+	./twopoint-correlation --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@ Sz
 	./conductivity --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@ --model $@
 	./dos          --sites $(vfn).$@.sites --dangler $(vfn).$@.chMPA -o $(vfn).$@
 	$(JULIA) ./analysis/post-hoc-verification.jl -i $(vfn).$@ -o $(vfn).$@ -m $@
