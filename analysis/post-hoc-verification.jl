@@ -116,8 +116,9 @@ function check_dos_trace(H, ifn, ofn, L)
     for n = 1:N
         trTned[n] = sum(cos.((n-1)*acos.(d)))
     end
-    #@show trTned
-    #@show trTncc
+    #@show L
+    #@show trTned[1:3]
+    #@show trTncc[1:3]
     trTndiff = trTned - trTncc
     @show abs.(trTndiff) |> maximum
 end
@@ -128,13 +129,12 @@ function check_conductivity(H, j, ifn,ofn,L)
     N = size(μcc,1)
     μed = -exact_μ(H,j,N) #minus because I took imag part of j
 
-    diff = 2.0^(-2L)*μed - μcc
-    vmax = abs.(diff) |> maximum
-    #@show μcc
-    #@show 2.0^(-2L)*μed
-    #@show μed
-    #@show μcc
-    @show abs.(diff) |> maximum 
+    cond_diff = 2.0^(-L)*μed - μcc
+    #@show L
+    #@show μed[1,1], μed[1,2]
+    #@show 2.0^(L)*μcc[1,1], 2.0^(-L)*μcc[1,2]
+    #@show L, (μed./μcc)[1,1], (μed./μcc)[1,2]
+    @show abs.(cond_diff) |> maximum 
 end
 
 function check_Sz_correlation(H, ifn, L)
