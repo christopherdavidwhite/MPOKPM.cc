@@ -76,7 +76,7 @@ listandwrite_dangler(MPOt<Tensor> const& H,
 
   //normalization
   int L = H.N();
-  cheb = cheb*pow(2.0, -L/2);
+  cheb = cheb*pow(2.0, -L/2.0);
   cheb.orthogonalize();
   iter.orthogonalize();
 
