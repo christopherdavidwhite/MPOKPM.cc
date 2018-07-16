@@ -214,15 +214,15 @@ function main(args)
         X,Y,Z,P,M = pauli_matrices_sparse(L)
         if "rfheis" == model
             H = rfheis(hz)
-            j = imag(sum([2*(Y[l]*X[l+1] - X[l]*Y[l+1]) for l in 1:L-1]) |> full)
+            j = imag(sum([0.5*im*(P[l]*M[l+1] - M[l]*P[l+1]) for l in 1:L-1]) |> full)
         elseif "2NJW" == model
             H = rf_2NJW(hz)
-            j =  imag(sum([2*(Y[l]*X[l+1] - X[l]*Y[l+1]) for l in 1:L-1]) |> full) 
-            j += imag(sum([1*(Y[l]*Z[l+1]X[l+2] - X[l]*Z[l+1]*Y[l+2]) for l in 1:L-2]) |> full) 
+            j  = imag(sum([im*(P[l]*M[l+1] - M[l]*P[l+1]) for l in 1:L-1]) |> full)
+            j += imag(sum([im*(P[l]*Z[l+1]*M[l+2] - M[l]*Z[l+1]*P[l+2]) for l in 1:L-2]) |> full)
         else
             error("Bad model $model")
         end
-        @show trace(H^2)
+        #@show trace(H^2)
         check_dos_trace(H, ifn, ofn, L)
         check_conductivity(H, j, ifn, ofn, L)
         check_Sz_fourier_correlation(H,ifn,L)
