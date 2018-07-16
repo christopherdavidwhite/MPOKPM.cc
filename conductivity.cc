@@ -80,9 +80,10 @@ int main(int argc, char **argv)
       j_ampo +=  coeff,"S+",b,"S-",b+1;
       j_ampo += -coeff,"S-",b,"S+",b+1;
     }
+    
     for(int b = 1; b < L-1; ++b) {
-      j_ampo +=  coeff,"S+",b,"Sz",b+1,"S-",b+2;
-      j_ampo += -coeff,"S-",b,"Sz",b+1,"S+",b+2;
+      j_ampo +=  2*coeff,"S+",b,"Sz",b+1,"S-",b+2;
+      j_ampo += -2*coeff,"S-",b,"Sz",b+1,"S+",b+2;
     }
   }
   
