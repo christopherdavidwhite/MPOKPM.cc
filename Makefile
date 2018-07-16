@@ -67,7 +67,7 @@ vfn = $(VDIR)/L$(vL)-N$(vN)-M$(vM)
 verification: verification-setup rfheis 2NJW
 
 .PHONY: verification-setup
-verification-setup: construct-algebra fourier twopoint-correlation dos analysis/post-hoc-verification.jl
+verification-setup: construct-algebra conductivity fourier twopoint-correlation dos analysis/post-hoc-verification.jl
 
 	rm -rf $(VDIR)
 	mkdir -p $(VDIR)
