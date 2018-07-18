@@ -10,20 +10,19 @@ using PyCall
 # from C++ the right way. It's annoying. I should file a bug report.
 # not type-stable!
 #
+# Ultimately need to swap this out for h5py version, but am too tired
+# to think through row vs. column indexing now.
 function read_4index_cxx_hdf5(fn)
-    f = h5py.File("$(fn)", "r+")
-    μcc = get(f, "tensor")[:value]
-    f[:close]()
 
-    @show size(μcc)
-    μcc = permutedims(μcc, [2,1,4,3])
+    #julia's h5read is broken. Need the reshape to fix.
+    μcc = h5read(fn, "/tensor")
     L = size(μcc,1)
     N = size(μcc,2)
-    reshape(μcc, (N,L,N,L))
+    μcc = reshape(μcc, (N,L,N,L))
+     
     if 5 == length(size(μcc))
         μcc  =  μcc[:,:,:,:,1] + im*μcc[:,:,:,:,2]
-    elseif 4 == length(size(μcc))
-    else
+    elseif 4 != length(size(μcc))
         error("wrong rank")
     end
     return μcc
@@ -188,8 +187,8 @@ function check_Sz_correlation(H, ifn, L)
     j1 = 1
     j2 = 1
     μed = correlation(H, 0.5*Z[j1], 0.5*Z[j2], N)
-    @show 2.0^(-L)*μed
-    @show μcc[:,j1,:,j2]
+    #@show 2.0^(-L)*μed
+    #@show μcc[:,j1,:,j2]
     Sz1Sz1_diff = 2.0^(-L)* μed - μcc[:,j1, :,j2]
     @show abs.(Sz1Sz1_diff) |> maximum
 
