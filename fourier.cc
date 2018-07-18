@@ -75,10 +75,11 @@ int main(int argc, char **argv)
     auto Szq_mpo = IQMPO(Szq_ampo);
     auto Szqdag_mpo = IQMPO(Szqdag_ampo);
     IQTensor mu = double_mu(Tn, Szq_mpo, Tn, Szqdag_mpo);
-
-    OPENE(output_filename + ".SzqSzq." + std::to_string(q) + ".re",  realmu_file);
-    OPENE(output_filename + ".SzqSzq." + std::to_string(q) + ".im",  imagmu_file);
-    write_doubleKPM(mu, realmu_file, imagmu_file );
+    
+    /* there's some crazy-strange caching (?) bug here. If I don't
+       do this, mu's .store() doesn't get updated (?!) */
+    mu.set(2,2, mu.real(2,2));
+    export_hdf5(mu, output_filename + ".SzqSzq." + std::to_string(q));
   }
 }
 

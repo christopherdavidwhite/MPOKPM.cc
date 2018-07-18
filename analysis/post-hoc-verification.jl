@@ -210,8 +210,7 @@ function check_Sz_fourier_correlation(H, ifn, L)
 
     #julia's h5read is broken. Need the reshape to fix.
     for q = 0:Int(L/2)-1
-        μcc  =    readdlm("$(ifn).SzqSzq.$(q).re")
-        μcc += im*readdlm("$(ifn).SzqSzq.$(q).im")[:,1:end-1]
+        μcc  =  read_2index_cxx_hdf5("$(ifn).SzqSzq.$(q)")
         N = size(μcc, 2)
 
         Zq = zeros(2^L, 2^L)
@@ -220,6 +219,8 @@ function check_Sz_fourier_correlation(H, ifn, L)
         end
         μed = correlation(H, Zq, Zq', N)/4
         SzqSzq_diff = 2.0^(-L)* μed - μcc
+        #@show μcc[1,1], μcc[1,2]
+        #@show 2.0^(-L)*μed[1,1],2.0^(-L)* μcc[1,2]
         @show q, abs.(SzqSzq_diff) |> maximum
     end
 end
