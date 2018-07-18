@@ -3,6 +3,45 @@
 using ArgParse
 using HDF5
 
+using PyCall
+@pyimport h5py
+
+# julia really doesn't want to read a 4-index tensor written to hdf5
+# from C++ the right way. It's annoying. I should file a bug report.
+# not type-stable!
+#
+function read_4index_cxx_hdf5(fn)
+    f = h5py.File("$(fn)", "r+")
+    μcc = get(f, "tensor")[:value]
+    f[:close]()
+
+    @show size(μcc)
+    μcc = permutedims(μcc, [2,1,4,3])
+    L = size(μcc,1)
+    N = size(μcc,2)
+    reshape(μcc, (N,L,N,L))
+    if 5 == length(size(μcc))
+        μcc  =  μcc[:,:,:,:,1] + im*μcc[:,:,:,:,2]
+    elseif 4 == length(size(μcc))
+    else
+        error("wrong rank")
+    end
+    return μcc
+end
+
+#julia h5read is fundamentally broken here
+function read_2index_cxx_hdf5(fn)
+    #@show fn
+    f = h5py.File("$(fn)", "r+")
+    μcc = get(f, "tensor")[:value]
+    f[:close]()
+    if 3 == length(size(μcc))
+        μcc = μcc[:,:,1] + im * μcc[:,:,2]
+    elseif 2 != length(size(μcc))
+        error("wrong rank")
+    end
+    return μcc
+end
 
 function pauli_matrices_sparse(L :: Int64)
     sigx = sparse([0 1; 1 0])
