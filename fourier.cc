@@ -63,17 +63,14 @@ int main(int argc, char **argv)
 
   //this will depend on model.  maybe should put it in the returned
   //tuple or otherwise in utils.cc (or later models.cc)
-  
 
   std::cout << "q ";
   for(int q = 0; q < L; q++) {
     auto Szq_ampo = AutoMPO(Tn.sites());
-    auto Szqdag_ampo = AutoMPO(Tn.sites());
     std::cout << q << " " << std::flush;
     for(int j = 1; j <= L; j++) { Szq_ampo += cos(pi*j*q/L), "Sz", j; }
     auto Szq_mpo = IQMPO(Szq_ampo);
-    auto Szqdag_mpo = IQMPO(Szqdag_ampo);
-    IQTensor mu = double_mu(Tn, Szq_mpo, Tn, Szqdag_mpo);
+    IQTensor mu = double_mu(Tn, Szq_mpo, Tn, Szq_mpo);
     
     /* there's some crazy-strange caching (?) bug here. If I don't
        do this, mu's .store() doesn't get updated (?!) */
