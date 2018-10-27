@@ -105,6 +105,25 @@ me (CDW) for this.)
 ### example
 ## `construct_algebra`
 ### options
+ - `--sweep` Use fit-multiply (sweeping multiplication
+   algorithm). Don't do this.
+ - `-e e` Error cutoff in multiplication
+ - `-f FILE` Output to file `FILE`
+ - `-h h` Width of disorder in onsite `Sz` fields 
+ - `-Q Q` artificially rescale Hamiltonian by `Q`
+ - `-s s` PRNG seed `s`
+ - `-w, --nsweeps w` Use `w` sweeps if using fit-multiplication. Don't
+   do this.
+ - ` -L, --system-size L` System size
+ - `-m, --model` Model to simulate; one of 
+   + `rfheis`: random-field Heisenberg
+   + `xx`: (isotropic) XY model
+   + `rpara` : random paramagnets
+   + `2NJW`: Heisenberg with second-neighbor Fermion hopping
+ - `-M, --bond-dimension M` Maximum bond dimension (program exits when
+   `T[0...n](H)` reaches this bond dimension)
+ - `-N, --chebyshev-order N` Maximum Chebyshev order (program exits when
+   it has computed `T[0..N]`)
 ### example
 ## `dos`
 ### options
