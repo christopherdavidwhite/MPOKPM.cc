@@ -1,6 +1,18 @@
+# Status and usage
+This is methods-research code. We don't have a solid understanding of
+where the methods we implement will be reliable and useful, though we
+have some notions; the whole point is to try that and see. If you try
+to use this for cool physics, you'll be a guinea pig for the
+methods. Which is great! We love methodological guinea pigs! But you
+should be very aware of what you're signing up for.
+
+If you do use the code (or just the methods it implements) and get
+good results, let us know---we'd like to put out a methods paper with
+you, in addition to your physics paper.
+
 # Introduction
 
-Compute conductivity (soon other quantities...) using a variant of the
+Compute conductivity, density of states, S(q,ω) using a variant of the
 kernel polynomial method in which operators are represented by matrix
 product operators.
 
@@ -13,11 +25,11 @@ of these down by a factor of N, for computation times like N^2 and
 memory requirements like N.
 
 For single-particle systems this is enough. In that case N ~ L^d,
-where L is the system size and d the spatial dimension, but for
-many-body systems (e.g. 3 for a chunk of silicon), so you can get to
-fairly large sizes. For many-body systems, on the other hand, one has
-to be more clever. The Hilbert space dimension goes as N ~ 2^(L^d), so
-even after the speedup KPM buys us we can't proceed straightforwardly.
+where L is the system size and d the spatial dimension (e.g. 3 for a
+chunk of silicon), but for many-body systems, so you can get to fairly
+large sizes. For many-body systems, on the other hand, one has to be
+more clever. The Hilbert space dimension goes as N ~ 2^(L^d), so even
+after the speedup KPM buys us we can't proceed straightforwardly.
 
 Enter the matrix product operator. All you really need for KPM is to
 be able to multiply and add operators; matrix product operators (MPOs)
@@ -27,17 +39,17 @@ every multiplication or addition one has to re-compress; this repeated
 lossy compression may (or may not!) destroy the physics you're trying
 to understand.
 
-# Method sketch and code layout
-We use Miles Stoudenmire's ITensor (http://itensor.org/) for MPO
-representations/operations. (It's a pretty great library, from what
-I've seen: I've used a quasi-proprietary competitor and written my
-own, and on a few days acquaintance ITensor seems way, way better. If
-Miles is ever looking for a job, go hire him.)
+We do one better: we represent the whole space of powers of the
+Hamiltonian in a single compact datastructure. Computing that is the
+expensive part; we can write it to disk and use it at our leisure to
+compute quantities of physical interest.
+
+# Method sketch
 
 KPM rests on the fact that one can write all kinds of quantities of
 interest in terms of coefficients like
 
-    mu[n,m] = trace(T[n](H) j T[m](H) j)
+    μ[n,m] = trace(T[n](H) j T[m](H) j)
 
 where `T[n](H)` and `T[m](H)` are the nth and mth Chebyshev
 polynomials of the given Hamiltonian H and j is some operator
@@ -48,27 +60,80 @@ the base case + recursion relation
     T[1](H) = H
     T[n](H) = 2*H*T[n-1](H) - T[n-2](H) ;
 
-Note that despite the lossy compression a single Chebyshev may gake
-gigabytes of memory to store, so we don't want to have more than the
-bare minimum lying around.
+We compute the whole set of `T[n](H)`, they share a substantial amount of information, so it is better to store them
 
-Functions of interest:
+# Code structure 
 
-  - `single_mu` computes a single coefficient `mu[n,m]` for given
-      Chebyshevs `T[n]`,`T['m]`
-  - `advance_chebyshevs` implements one sets `T[n]`, `T[n-1]` to
-    `T[n+1]`, `T[n]` respectively
-  - `all_mu` is a driver function using `advance_chebyshevs` to walk
-    through the Chebyshev polynomials and `single_mu` to compute the
-    relevant coefficients at each step.
-	
-You'll see a parameter `Maxm` in various places; this controls how
-vigorously the lossy compression works.
+We use Miles Stoudenmire's ITensor (http://itensor.org/) for MPO
+representations/operations. (It's a pretty great library, from what
+I've seen: I've used a quasi-proprietary competitor and written my
+own, and ITensor is way, way better.)
+
+`construct_algebra.cc` compiles to `construct_algebra`, which is the
+core MPOKPM utility: it constructs the set of Chebyshev polynomials
+`T[n](H)` and writes them to disk using in the ITensor native format.
+
+A series of utilities read this structure and use them to compute quantities of physical interest. Those utilities are
+ - `conductivity <-- conductivity.cc` computes conductivity KPM coefficients
+   `tr( T[n](H) j T[m](H) j)`, where `j` is a current operator
+ - `fourier <-- fourier.cc`, which computes
+   `tr( T[n](H) Sz[q] T[m](H) Sz[q])`, where `Sz[q]` is the Fourier
+   cosine transform of the onsite spins `Sz[j]`, `Sz[q] = Σ cos(πj/L)
+   Sz[j]`.
+ - `dos <-- dos.cc` computes the density-of-states KPM coefficients `tr( T[n](H) )`
+ - `twopoint-correlation <-- twopoint-correlation.cc` computes all the two-point correlation
+   functions `tr( T[n](H) Sz[j1] T[n](H) Sz[j2]` .
+   
+We test with `test <-- test.cc` and `post-hoc-verification.jl`. `test`
+runs unit tests, while `post-hoc-verification.jl` compares with a
+small-system reimplementation in Julia using exact diagonalization. If
+you want to understand exactly what computations we're doing,
+`post-hoc-verification` is a pretty good place to start.
+
+# Testing
+Do `make test` or `make verification`.
+   
+# Code printouts
+If you want pdfs of the code for printing/reviewing in
+Notability/etc., do `make ps`.
+
+# Documentation for individual utilities
+(at the moment you're going to have to either read the code or talk to
+me (CDW) for this.)
+## `conductivity`
+### options
+### example
+## `construct_algebra`
+### options
+### example
+## `dos`
+### options
+### example
+## `fourier`
+### options
+### example
+## `twopoint-correlation`
+### options
+### example
+
 
 # Dependencies
 
-If you wish to run the verification code ("make verification"), you'll need
- - Julia
- - ArgParse
- - PyPlot
- - Seaborn (Python package)
+Core dependencies:
+ - libpthread
+ - libhdf5, libhdf5_cpp
+ - git (the results of git are only used for filing the results of
+   `make verification`, but at Present I expect every `make` command
+   to chooke if it's not installed)
+
+Additional dependencies for tests (`make test`):
+ - Google Test
+ 
+Additional dependencies for verification (`make verification`)
+ - Julia < v0.7.0
+ - Julia packages:
+   + ArgParse
+   + HDF5
+   + PyCall
+ - Python packages
+   + h5py
