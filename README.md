@@ -58,9 +58,9 @@ the base case + recursion relation
 
     T[0](H) = identity operator
     T[1](H) = H
-    T[n](H) = 2*H*T[n-1](H) - T[n-2](H) ;
+    T[n](H) = 2*H*T[n-1](H) - T[n-2](H) .
 
-We compute the whole set of `T[n](H)`, they share a substantial amount of information, so it is better to store them
+We compute the whole set of `T[n](H)`; they share a substantial amount of information, so it is better to store them
 
 # Code structure 
 
@@ -142,8 +142,8 @@ Core dependencies:
  - libpthread
  - libhdf5, libhdf5_cpp
  - git (the results of git are only used for filing the results of
-   `make verification`, but at Present I expect every `make` command
-   to chooke if it's not installed)
+   `make verification`, but at present I expect every `make` command
+   to choke if it's not installed)
 
 Additional dependencies for tests (`make test`):
  - Google Test
